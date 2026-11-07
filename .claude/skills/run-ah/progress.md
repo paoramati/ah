@@ -97,3 +97,12 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - Decision: `markdown`, `html`, `tracker` skills stay project-level (scratch dir) until the user wants every project's agent to reach for ah.
 - [ ] Verify from a session started in another directory (user): the skill is listed and its links open.
 - Remove the global link with `rmdir "%USERPROFILE%\.claude\skills\run-ah"` (never `rd /s`).
+
+## Coin-catalogue session: hooks did not fire (unresolved)
+
+- Process 18936 (session 4fab5bca, started 22:54:15Z, after the hooks were installed ~22:12Z) sent ah no hook events, so `ah tracker add` said `this agent has no directory`. No project-level settings, no refused events in serve.log.
+- The same session id, restarted as pid 36068 at 23:03:37Z, fired SessionStart/UserPromptSubmit/Stop normally and the tracker registered at 23:04:43Z.
+- Ruled out: started before the hooks (it started after), project settings overriding, stale terminal PATH (36068 was launched from a PowerShell under a Windows Terminal that started 12:47Z, before the PATH change, and hooks worked).
+- Not found: why 18936 did not fire hooks; the process is gone. If it recurs, in that session run `/hooks`, `where.exe ah`, and check `registry-events.jsonl` for its session id.
+- Robust fix idea (not built): let `ah tracker add` register the session from the CLI's own cwd when the server doesn't know it.
+- Added: `link-ah-skills.ps1` and the "Set a project up for ah (only when the user asks)" section in SKILL.md.
