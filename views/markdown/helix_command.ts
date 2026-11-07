@@ -76,7 +76,8 @@ export async function helixArgs(help: string, file: string): Promise<string[]> {
 }
 
 export const helixCommand: TerminalCommand = async (file) => ({
-  command: "hx",
+  // node-pty on Windows doesn't add the .exe itself
+  command: process.platform === "win32" ? "hx.exe" : "hx",
   // Without hx, it fails to start either way
   args: await helixArgs(await helixHelp().catch(() => ""), file),
 })
