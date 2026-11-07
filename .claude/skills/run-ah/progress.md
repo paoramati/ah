@@ -82,3 +82,10 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - Hand-fed hook events (`node -e ... | ah hook agent --harness claude`) are a valid way to test hook behaviour from an unhooked session.
 - Don't run `ah view <file>` from another session to open a file you want to keep bound elsewhere: it rebinds the file. Open the URL with `rundll32 url.dll,FileProtocolHandler <url>`.
 - Still open: tracker items 3-5, `UV_HANDLE_CLOSING` assertion, `ps` warning, editor (#8), skills global (#5), PR merge order.
+
+## Tracker wrap-up
+
+- Tracker checks done (Park/Done, restart, SessionStart context, Go on hold, spaces and another drive). Issue #7 body ticked.
+- Parked: revs without jj -> #9. Unimplemented on purpose: LAN access / `lan-proxy.mjs` -> #10. Open question: tracker overview without the dashboard (in #7).
+- `UV_HANDLE_CLOSING` was a one-off from the dashboard spawn crash; no fix needed (correction on #2).
+- Not tested: UNC paths.
