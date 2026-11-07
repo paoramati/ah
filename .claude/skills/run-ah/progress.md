@@ -89,3 +89,11 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - Parked: revs without jj -> #9. Unimplemented on purpose: LAN access / `lan-proxy.mjs` -> #10. Open question: tracker overview without the dashboard (in #7).
 - `UV_HANDLE_CLOSING` was a one-off from the dashboard spawn crash; no fix needed (correction on #2).
 - UNC paths tested through the local admin share (localhost, c$): tracker add, view, status, dir lookup and comments all work.
+
+## Global skill (#5)
+
+- [x] Junction `~/.claude/skills/run-ah` -> `C:\projects\ah\.claude\skills\run-ah` created (user approved). All skill files resolve through it.
+- Decision: `progress.md` stays in the repo (shared project state; the skill links to it). Every update is a commit.
+- Decision: `markdown`, `html`, `tracker` skills stay project-level (scratch dir) until the user wants every project's agent to reach for ah.
+- [ ] Verify from a session started in another directory (user): the skill is listed and its links open.
+- Remove the global link with `rmdir "%USERPROFILE%\.claude\skills\run-ah"` (never `rd /s`).
