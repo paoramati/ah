@@ -1,0 +1,2 @@
+bin/ah text eol=lf
+bin/ah.cmd text eol=crlf
