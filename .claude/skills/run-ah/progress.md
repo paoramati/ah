@@ -2,35 +2,38 @@
 
 ## Decisions
 
-- Path: A, WSL2 (chosen by user)
-- Features: file views only for now (no Rex/jj/skepsis)
+- Path: native Windows (was WSL2; dropped because WSL cannot message native Windows Claude Code)
+- Features: file views + chat; no Rex/jj/skepsis/dashboard
+- Rule: runbook reviewed by user before ANY execution (installs, patches, config edits)
 
 ## Done
 
-- Cloned upstream to C:\projects\ah (334f01b), used for editing/notes
-- Phase 0: WSL2 had only docker-desktop distro
-- Installed Ubuntu (`wsl --install -d Ubuntu --no-launch`); created user `brand` (passwordless sudo, default user via /etc/wsl.conf)
-- Phase 1 (partial): nvm + Node v24.22.2 in WSL. Claude Code NOT yet installed in WSL
-- Phase 2: cloned to ~/src/ah (WSL), `npm install` ok, 0 vulns
-- Phase 3: `ah` symlinked in ~/.local/bin, `ah -h` ok; `npm test` 275 pass / 8 skipped; `tsc` clean
-- Phase 4: `ah server restart` ok; 7420 -> 302, 7421 -> 404 from Windows (reachable). Rex missing (expected)
+- Cloned upstream fork to C:\projects\ah; PR #1 (skill files) open on paoramati/ah
+- Researched native feasibility: Windows named-pipe inbox exists, needs auth line with CLAUDE_CODE_MESSAGING_TOKEN
+- WSL experiment (Ubuntu, Node 24, ah cloned and running there); abandoned, harmless
+- Branch `windows-native` created (no code changes yet)
+- Runbook rewritten for native (v2), awaiting review
+
+## Code review (done, read-only)
+
+- Runbook v3 has findings B1-B4 (blockers), T1, L1-L7 and patches P1-P8
+- Key: hook already forwards currentAddress() to the server, so token needs only P2/P3; `openable()` (B1) breaks every file view on Windows paths
 
 ## Next
 
-- Install Claude Code in WSL
-- Phase 5 hooks (needs approval to edit WSL ~/.claude/settings.json, backup first)
-- Phase 6 skills, Phase 7 smoke test
-
-## Gotchas learned
-
-- Running WSL from Windows tools: Windows PATH leaks in (Windows npm). Use script files, strip /mnt/c from PATH, `nvm use 24`. `wsl` output is UTF-16: pipe through `tr -d '\0'`.
-- Helper scripts in session scratchpad (p1-p4.sh) source nvm; use `bash -lc` interactive shell otherwise.
-- Server may die when WSL idles; recheck `ah server status`.
+- User reviews runbook.md
+- Then: phase 1 (npm install on Windows), read hook.ts/core.ts/registry.ts for P4, patch, test
 
 ## Open questions
 
-- Claude Code on WSL: install + login needed
-- OK to edit WSL settings.json?
+- Does the hook-registered address carry the token to the server (P4)? Unread: core/hook.ts, core/core.ts ~280-300, core/registry.ts
+- Wire format after the auth line on Windows (undocumented)
+- Approve editing C:\Users\brand\.claude\settings.json (hooks + crossSessionInbound)?
+
+## Gotchas
+
+- WSL from Windows tools: Windows PATH leaks in; output UTF-16 (`tr -d '\0'`).
+- Claude Code here: v2.1.319, pipe path in ~/.claude/sessions/<pid>.json (messagingSocketPath)
 
 ## Issues
 

@@ -16,7 +16,7 @@ Initiative: run `ah` (local server + CLI, ports 7420 API / 7421 HTML pages) on W
 
 ## Files
 
-- [runbook.md](runbook.md): step-by-step plan (WSL2 path A, native path B). Source of truth; published copy: https://claude.ai/artifact/HtYdvuzubaT2ADnk3TKMie
+- [runbook.md](runbook.md): step-by-step plan, native Windows (v2). Source of truth. The older published artifact https://claude.ai/artifact/HtYdvuzubaT2ADnk3TKMie is the superseded WSL2 version.
 - [progress.md](progress.md): decisions, done steps, open questions, issues.
 - [windows-port.md](windows-port.md): what breaks natively and effort estimate. Use if path B is chosen.
 
