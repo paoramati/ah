@@ -514,8 +514,12 @@ export async function watchRex(onChange: (rex: RexState) => void): Promise<never
     last = json
     onChange(rex)
   }
+  // Attempts in a row that never started Rex, as when it isn't installed.
+  // They back off and log once instead of every two seconds forever.
+  let unstarted = 0
   for (let attempt = 0; ; attempt++) {
     let loaded = false
+    let started = false
     if (attempt > 0) health.events.reconnects++
     const binary = health.binary
     const child = spawn(binary, ["--autostart=false", "events", "--all", "--json"], {
@@ -527,6 +531,7 @@ export async function watchRex(onChange: (rex: RexState) => void): Promise<never
       onHealth()
     }
     child.on("spawn", () => {
+      started = true
       setConnected(true)
       setUnrunnable(null)
     })
@@ -551,7 +556,7 @@ export async function watchRex(onChange: (rex: RexState) => void): Promise<never
       (e) => {
         // Events would queue forever with nothing to replay them onto, so
         // start over with a fresh stream
-        console.error("ah: couldn't load Rex sessions:", e)
+        if (!isNotFound(e)) console.error("ah: couldn't load Rex sessions:", e)
         child.kill()
       },
     )
@@ -568,8 +573,12 @@ export async function watchRex(onChange: (rex: RexState) => void): Promise<never
     }
     const code = await exited
     setConnected(false)
-    console.error(`ah: rex events exited with ${code}, restarting`)
+    unstarted = started ? 0 : unstarted + 1
+    if (unstarted <= 1) console.error(`ah: rex events exited with ${code}, restarting`)
     emit({ front: null, sessions: [] })
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    // 2s, doubling to a minute while Rex won't start
+    await new Promise((resolve) =>
+      setTimeout(resolve, Math.min(2000 * 2 ** Math.max(unstarted - 1, 0), 60_000)),
+    )
   }
 }
