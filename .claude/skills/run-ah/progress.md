@@ -63,3 +63,13 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - Log noise: Rex retry loop logs every ~2s (955 reconnects in 31 min).
 - WSL server on 7420 shadowed the native one via localhost forwarding; WSL was terminated (`wsl --terminate Ubuntu`).
 - apply-ah-config.ps1 wrote a UTF-8 BOM into settings.json; stripped. Use `-Encoding utf8NoBOM` or node for JSON in future.
+
+## Parity pass (this session)
+
+- [x] L2 server stop/restart verifies the pid (Windows command line via CIM; also accepts "server serve"). Restart tested.
+- [x] Rex retry loop backs off to 60s and logs once when Rex is missing.
+- [x] Unit test: address fallback keeps the token for the same socket (core.test.ts).
+- [x] Chat message from the page delivered and answered (file comment + chat both work).
+- [x] Restart behaviour verified live: after `ah server restart` the server has no address, a page message stays `waiting`, and it flushes the moment the session's address is re-registered (any `ah` CLI call from the session, or a hook event). No loss, only delay.
+- [ ] HTML view, tracker, skills (Phase 6), fresh-session hook env check.
+- Noise: markdown view's helix pane tries `hx` via node-pty and logs a spawn error when `hx` is missing (use `--no-editor`).
