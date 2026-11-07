@@ -117,3 +117,9 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - `main` = pure mirror of upstream (`david-crespo/ah`, identical at 334f01b when decided). `windows-native` = fork default and integration branch. Feature branches off `windows-native`, PRs into it.
 - #1 and #3 closed as superseded (their content is on `windows-native`); #4 merged into `windows-native`. Replaces the earlier plan to merge #1 -> #3 -> #4 into `main`.
 - Upstream sync: `gh repo sync paoramati/ah --source david-crespo/ah --branch main`, then merge `main` into `windows-native`.
+
+## Self-registering tracker add
+
+- `ah tracker add` (and `currentTracker`) now register the session from the CLI when the server answers "this agent has no directory": a SessionStart-equivalent event built from `CLAUDE_CODE_SESSION_ID`, the process key, the current directory and the address (with token), then one retry. It prints one stderr line when it does this. Only when the server does not know the session; a known session's directory is never overwritten.
+- Tested live with a fake unregistered session (before: "this agent has no directory"; after: registered, tracker added, exit 0), and unit-tested with a mocked server. Fake session ended and cleaned up.
+- Does not explain why the first coin-catalogue process sent no hooks; it removes the dependency for `tracker add`. Other commands that need the agent's directory still rely on hooks.

@@ -29,7 +29,7 @@ import { isOneOf, str } from "../platform/guards.ts"
 import { ensureServer } from "../platform/server.ts"
 import { currentAgent, currentAddress } from "../platform/session.ts"
 import { underCodexDaemon } from "./tuis.ts"
-import { type Address, HARNESSES, type Harness } from "./model.ts"
+import { type Address, type AgentRef, HARNESSES, type Harness } from "./model.ts"
 import { HOOK_EVENTS, type RegistryEvent } from "./registry.ts"
 import { sanitizeTitle } from "./summary.ts"
 
@@ -81,6 +81,27 @@ async function send(port: number, event: Report): Promise<EventReply | null> {
     console.error(`ah: couldn't post the event: ${e}`)
     return null
   }
+}
+
+/** For a command that finds the server doesn't know its session (its hooks
+ * never reported, as in a session started before they were installed): tell
+ * the server what a SessionStart hook would, from this process's own env and
+ * directory. Returns whether the server took it. */
+export async function registerSession(port: number, agent: AgentRef): Promise<boolean> {
+  if (!agent.session || !isOneOf(HARNESSES, agent.harness)) return false
+  const cwd = process.cwd()
+  const event: Report = {
+    kind: "hook",
+    event: "SessionStart",
+    harness: agent.harness,
+    session: agent.session,
+    block: agent.block,
+    process: agent.block ? null : agent.process,
+    label: sanitizeTitle(abbreviatePath(cwd)),
+    cwd,
+    address: agent.harness === "claude" ? currentAddress() : null,
+  }
+  return (await send(port, event)) !== null
 }
 
 async function readStdin(): Promise<string> {
