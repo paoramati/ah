@@ -32,8 +32,11 @@ export function parseAddress(value: unknown): Address | null {
   if (!isRecord(value)) return null
   switch (value.harness) {
     case "claude": {
-      const { socket } = value
-      return typeof socket === "string" ? { harness: "claude", socket } : null
+      const { socket, token } = value
+      if (typeof socket !== "string") return null
+      return typeof token === "string"
+        ? { harness: "claude", socket, token }
+        : { harness: "claude", socket }
     }
     case "codex": {
       const { thread, pid } = value
@@ -93,7 +96,13 @@ export function currentAddress(): Address | null {
     case undefined:
       return null
     case "claude":
-      return { harness: "claude", socket: env.CLAUDE_CODE_MESSAGING_SOCKET! }
+      return {
+        harness: "claude",
+        socket: env.CLAUDE_CODE_MESSAGING_SOCKET!,
+        ...(env.CLAUDE_CODE_MESSAGING_TOKEN && {
+          token: env.CLAUDE_CODE_MESSAGING_TOKEN,
+        }),
+      }
     case "codex": {
       const pid = found.procs.find((p) => p.harness === "codex")?.pid ?? null
       return { harness: "codex", thread: env.CODEX_THREAD_ID!, pid }
@@ -283,12 +292,18 @@ async function postToClaude(
   address: Extract<Address, { harness: "claude" }>,
   text: string,
 ): Promise<void> {
-  // No auth line: on macOS it only proves a post came from the session's own
-  // child, which ah's server isn't, and only a session that bypasses
-  // permission prompts holds posts it can't verify
-  // (code.claude.com/docs/en/cross-session-messaging, "The session's inbox
-  // socket"). Run that way, ah needs `crossSessionInbound: "accept"`.
+  // The auth line is sent when the address has a token, which the CLI and
+  // hooks (children of the session) pass along. macOS doesn't need it: it
+  // only proves a post came from the session's own child, which ah's server
+  // isn't, and only a session that bypasses permission prompts holds posts it
+  // can't verify (code.claude.com/docs/en/cross-session-messaging, "The
+  // session's inbox socket"). Run that way, ah needs
+  // `crossSessionInbound: "accept"`. Native Windows requires the auth line.
   const line = JSON.stringify({ type: "user", message: { role: "user", content: text } })
+  // Native Windows closes a connection whose first line isn't the auth line
+  const auth = address.token
+    ? JSON.stringify({ type: "auth", token: address.token }) + "\n"
+    : ""
   // Open only once the message is ready: the address drops connections that
   // go 30s without a complete line. The address closes right after reading
   // the line, but the timeout bounds the wait in case it ever doesn't, since
@@ -301,7 +316,7 @@ async function postToClaude(
     )
     conn.on("error", reject)
     conn.on("close", () => resolve())
-    conn.end(line + "\n")
+    conn.end(auth + line + "\n")
   })
 }
 

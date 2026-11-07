@@ -57,6 +57,10 @@ export type Address =
       harness: "claude"
       /** Its inbox socket */
       socket: string
+      /** The session's messaging token. Native Windows requires it as the
+       * first line of a connection; elsewhere it is optional. Held in memory
+       * only, never logged. */
+      token?: string
     }
   /** `pid` is the TUI's process, if it could be found, since Codex keeps no
    * record of which threads are running */
