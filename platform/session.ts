@@ -324,7 +324,13 @@ async function postToClaude(
   // session's inbox socket"). Run that way, ah needs
   // `crossSessionInbound: "accept"`. Native Windows requires the auth line.
   const line = JSON.stringify({ type: "user", message: { role: "user", content: text } })
-  // Native Windows closes a connection whose first line isn't the auth line
+  // Native Windows closes a connection whose first line isn't the auth line,
+  // and the close looks like a delivery from here. So without a token (as after
+  // a server restart, until a hook or command from the session reports one)
+  // fail, which holds the post for the next address with a token.
+  if (process.platform === "win32" && !address.token) {
+    throw new Error("no messaging token for this session yet; held until it reports one")
+  }
   const auth = address.token
     ? JSON.stringify({ type: "auth", token: address.token }) + "\n"
     : ""

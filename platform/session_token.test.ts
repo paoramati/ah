@@ -53,7 +53,14 @@ test("a post to a session with a token starts with the auth line", async () => {
   ])
 })
 
-test("a post without a token is just the message", async () => {
+test("a post without a token is just the message, except on Windows where it is refused", async () => {
+  if (process.platform === "win32") {
+    // Windows closes the connection unread, which looks like delivery: refuse so the post stays held
+    await expect(
+      postTo({ harness: "claude", socket: inboxPath() }, "hello"),
+    ).rejects.toThrow(/no messaging token/)
+    return
+  }
   const lines = await withInbox((socket) => postTo({ harness: "claude", socket }, "hello"))
   expect(lines.map((l) => JSON.parse(l))).toEqual([
     { type: "user", message: { role: "user", content: "hello" } },
