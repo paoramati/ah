@@ -88,4 +88,4 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - Tracker checks done (Park/Done, restart, SessionStart context, Go on hold, spaces and another drive). Issue #7 body ticked.
 - Parked: revs without jj -> #9. Unimplemented on purpose: LAN access / `lan-proxy.mjs` -> #10. Open question: tracker overview without the dashboard (in #7).
 - `UV_HANDLE_CLOSING` was a one-off from the dashboard spawn crash; no fix needed (correction on #2).
-- UNC paths tested via `\localhostd` (all routes OK).
+- UNC paths tested through the local admin share (localhost, c$): tracker add, view, status, dir lookup and comments all work.
