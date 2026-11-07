@@ -42,3 +42,33 @@ Fix, in order:
 
    Then retry `ah tracker add ...`. Repeat with `UserPromptSubmit` (and add `prompt:'x'`) after a server restart to re-register the session's token so held page messages go out.
 3. If `ah` isn't found, the PATH entry is missing: run `.claude/skills/run-ah/apply-ah-config.ps1` (the user must approve; it edits `~/.claude/settings.json`), then start a new session.
+
+## Set a project up for ah (only when the user asks)
+
+Do this only when the user explicitly asks to set a project up for ah. Don't do it on your own, and don't link anything globally. ah itself already works in every project (PATH, hooks and the server are machine-wide); this step only makes that project's agent use ah on its own.
+
+1. Run, with the project path (the user's current project unless told otherwise):
+
+   ```
+   powershell -ExecutionPolicy Bypass -File C:/projects/ah/.claude/skills/run-ah/link-ah-skills.ps1 -Project C:/projects/my-app
+   ```
+
+   It links ah's `markdown`, `html` and `tracker` skills into `<project>/.claude/skills` as junctions. It leaves existing entries alone. Undo with the same command plus `-Remove` (removes only the links).
+2. Tell the user to start a new Claude session in that project; skills load at session start. Check the three skills are listed there.
+3. Check hooks work in that new session: after the first prompt, `ah tracker add` shouldn't say "this agent has no directory" (see the no-hooks section above if it does).
+
+Conventions once linked:
+
+- Trackers live at `.claude/notes/<YYYY-MM-DD>-<slug>-tracker/index.html`. Create with `ah tracker add <file> --title "T" --goal "G"` (writes the template if missing and registers it), fill items, then `ah view <file> --in tab`.
+- Items go in the groups `Needed`, `Cleanup`, `Unrelated`:
+
+  ```html
+  <ah-item id="1" status="todo" rev="">
+    <h3>Short title</h3>
+    <p>What is wanted, file references, what was decided.</p>
+  </ah-item>
+  ```
+
+  Statuses: `todo`, `doing`, `done`, `dropped`, `hold`, `question`. `rev` stays blank (no jj on Windows).
+- The user clicks the Go icon on an item (shown on hover) to send it to the session. Answer on the page with `ah message respond '<file>' start|progress|done <request ids> --text "..."`, and update the item's status in the file.
+- `ah tracker add` prints "dashboard: not available on this platform"; that is expected. Show the tracker with `ah view`.
