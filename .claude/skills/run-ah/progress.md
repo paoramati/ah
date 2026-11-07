@@ -106,3 +106,8 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - Not found: why 18936 did not fire hooks; the process is gone. If it recurs, in that session run `/hooks`, `where.exe ah`, and check `registry-events.jsonl` for its session id.
 - Robust fix idea (not built): let `ah tracker add` register the session from the CLI's own cwd when the server doesn't know it.
 - Added: `link-ah-skills.ps1` and the "Set a project up for ah (only when the user asks)" section in SKILL.md.
+
+## Merge prep
+
+- PR bodies for #1, #3, #4 rewritten to match their contents; checks re-run (tsc, lint clean; tests 13 failed / 267 passed, all baseline). Runbook and CLAUDE.md say to stay on `main` once the PRs merge.
+- Merge order: #1 -> #3 -> #4, retargeting each to `main`. Awaiting the user's confirmation in the terminal (the request came through a page comment).
