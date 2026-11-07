@@ -30,10 +30,10 @@ Phases
   - [ ] P3 unit test (core.address fallback) not written
   - [ ] L2 optional `isAhServe` lookup, skipped for now
 - [ ] Phase 3: put `C:\projects\ah\bin` on user PATH
-- [ ] Phase 4: server start, check 7420/7421
-- [ ] Phase 5: settings.json hooks + crossSessionInbound (ASK FIRST, back up)
+- [x] Phase 4: native server runs; 7420 302, 7421 404
+- [x] Phase 5: hooks + crossSessionInbound applied by user via apply-ah-config.ps1; backup settings.json.bak-ah; BOM stripped afterwards
 - [ ] Phase 6: skills junctions
-- [ ] Phase 7: smoke test
+- [~] Phase 7: delivery PASSED (ah message send -> this session over the pipe with auth line, reply via ah message respond). Still to check: hook env token in a NEW session, chat from the page, HTML view
 
 Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failures are baseline: Unix socket fixtures in tests (EACCES), `ai`/`codex` CLIs not installed, homedir env override in worker threads, file mode 0600, `.jj` ignore paths.
 
@@ -54,3 +54,12 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 ## Issues
 
 (none)
+
+## Findings from live test
+
+- Delivery works: comment on a file -> server -> Claude pipe with auth line -> arrives as a message. Wire format after the auth line was the existing user-message line.
+- New bug fixed: thread log name kept `\` and `:` of Windows paths (ENOENT). Commit "Flatten Windows paths in thread log file names".
+- Bug to fix: `ah server stop/restart` kills the pid blindly on Windows (`isAhServe` uses `ps`). Verify the command line before killing (L2).
+- Log noise: Rex retry loop logs every ~2s (955 reconnects in 31 min).
+- WSL server on 7420 shadowed the native one via localhost forwarding; WSL was terminated (`wsl --terminate Ubuntu`).
+- apply-ah-config.ps1 wrote a UTF-8 BOM into settings.json; stripped. Use `-Encoding utf8NoBOM` or node for JSON in future.
