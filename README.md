@@ -4,6 +4,32 @@
 
 This is experimental personal software, shared more as inspiration than as something to use off the shelf. If you don't want to use [Helix](https://helix-editor.com), [Rex](https://www.superlogical.com/updates/public-testing-beginning), [jj](https://www.jj-vcs.dev), or [skepsis](https://github.com/oxidecomputer/skepsis), no problem: have your agent replace Helix (I've included sample adapters for CodeMirror and Neovim), jj with git, or Rex with tmux.
 
+## Windows fork (native Windows 11)
+
+This is a fork of [david-crespo/ah](https://github.com/david-crespo/ah) that runs `ah` on **native Windows 11** with **native Windows Claude Code**. The rest of this README describes upstream, which targets macOS; where the two differ, this section wins. All credit for the design and the original code goes to the upstream author; this fork keeps its MIT license.
+
+**What works:** markdown and HTML views with chat and highlight comments sent to your Claude Code session, replies shown on the page, and task trackers (Go, Park, Done). It works with spaces in paths, other drives and UNC paths, and survives a server restart.
+
+**What doesn't, on purpose:** the dashboard, tab titles, native windows (pages open in a browser tab instead), Rex, jj features (tracker revs stay blank), skepsis diff review and LAN access. The embedded editor needs Helix, so use `--no-editor` unless you have installed it. Only Claude Code is tested; the Codex and OpenCode code paths are untouched and untested on Windows.
+
+**Quick start** (needs Node 24 and Claude Code 2.1.234 or newer):
+
+```
+git clone https://github.com/paoramati/ah.git C:/projects/ah
+cd C:/projects/ah
+npm install
+git checkout package-lock.json
+powershell -ExecutionPolicy Bypass -File .claude/skills/run-ah/apply-ah-config.ps1
+```
+
+The last command adds `bin` to your user PATH, adds the `ah hook agent` hooks to `~/.claude/settings.json` and sets `crossSessionInbound: "accept"`. It backs the file up first, but read the script before you run it. If you cloned somewhere other than `C:/projects/ah`, pass `-Repo <path>`. Then start a **new** Claude session (PATH and hooks load at start) and run `ah server restart`, then `ah view some-file.md --in tab`.
+
+**How it differs under the hood:** on Windows, Claude Code's inbox is a named pipe whose first line must be an auth line carrying the session's token. The CLI and the hooks pass that token to the server, which keeps it in memory only. After a server restart, page messages are held, not lost, and go out as soon as the session next reports its token (its next prompt, or any `ah` command run from it).
+
+**More:** [docs/windows.md](docs/windows.md) (index), [runbook with troubleshooting and rollback](.claude/skills/run-ah/runbook.md), [CLAUDE.md](CLAUDE.md) (how the fork works and how to change it). Work is tracked in the [issues](https://github.com/paoramati/ah/issues).
+
+**Branches:** `main` mirrors upstream and is never committed to. `windows-native` is this fork's default branch; branch off it and open pull requests into it.
+
 ## What it does (so far)
 
 The video below shows the main things `ah` can do right now:
@@ -51,7 +77,7 @@ What I _didn't_ want to build is a general tool that anyone could pick up and us
 
 ## Setup
 
-Requires Node 24 and some agent hooks. The terminal integration uses Rex; pages opened directly by an agent work without it. As I said above, you'll probably want to adapt it to your setup. See [docs/setup.md](docs/setup.md).
+**On Windows, use the [Windows fork](#windows-fork-native-windows-11) section instead of this one and docs/setup.md.** Requires Node 24 and some agent hooks. The terminal integration uses Rex; pages opened directly by an agent work without it. As I said above, you'll probably want to adapt it to your setup. See [docs/setup.md](docs/setup.md).
 
 ## How it works
 
