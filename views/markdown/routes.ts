@@ -9,7 +9,7 @@
 import { createReadStream } from "node:fs"
 import { readFile, realpath, writeFile } from "node:fs/promises"
 import { homedir } from "node:os"
-import { basename, dirname, join } from "node:path"
+import { basename, dirname, isAbsolute, join } from "node:path"
 import { Readable } from "node:stream"
 import type { WebSocket } from "ws"
 import { assetPath } from "../../platform/assets.ts"
@@ -181,7 +181,7 @@ async function ghBlob(q: URLSearchParams): Promise<Response> {
 /** Images and videos the file references by local path, relative to it:
  * under $HOME or next to the file, and outside dot directories */
 export async function localMedia(filePath: string, p: string): Promise<Response> {
-  const resolved = p.startsWith("/") ? p : join(dirname(filePath), p)
+  const resolved = isAbsolute(p) ? p : join(dirname(filePath), p)
   const notFound = new Response("not found", { status: 404 })
   let real: string
   let allowed: string[]
