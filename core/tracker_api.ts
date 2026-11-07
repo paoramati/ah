@@ -3,16 +3,41 @@
 // in the registry, which the server owns (trackers.ts), so these need it
 // running.
 
-import { callServer, serverUrl } from "../platform/cli.ts"
+import { callServer, die, serverJson, serverUrl } from "../platform/cli.ts"
 import { status } from "../platform/server.ts"
+import { registerSession } from "./hook.ts"
 import type { AgentRef, TrackerEntry, TrackerStatus, WorkspaceTrackers } from "./model.ts"
 
 const postJson = <T>(port: number, rest: string, body: unknown) =>
   callServer<T>(serverUrl(port, `core/${rest}`), { body })
 
+/** Post to a route that works out the agent's workspace. If the server says it
+ * doesn't know this agent's directory, as when its hooks never reported,
+ * register the session from here once and try again. */
+async function postAsAgent<T>(port: number, rest: string, body: object): Promise<T> {
+  const call = () =>
+    fetch(serverUrl(port, `core/${rest}`), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    })
+  let res = await call()
+  const agent = (body as { agent: AgentRef }).agent
+  if (res.status === 409 && (await res.clone().text()).includes("no directory")) {
+    if (await registerSession(port, agent)) {
+      console.error(
+        "ah: the server didn't know this session (its hooks hadn't reported); registered it from here",
+      )
+      res = await call()
+    }
+  }
+  if (!res.ok) die(`ah: ${(await res.text()).trim()}`)
+  return await serverJson<T>(res)
+}
+
 /** Make `path` the agent's workspace's current tracker */
 export async function setCurrentTracker(port: number, agent: AgentRef, path: string) {
-  await postJson(port, "current-tracker", { agent, path })
+  await postAsAgent(port, "current-tracker", { agent, path })
 }
 
 /** The agent's workspace's current tracker, or null if it has none or the
@@ -22,7 +47,8 @@ export async function currentTracker(
   agent: AgentRef,
 ): Promise<string | null> {
   if (!(await status(port))) return null
-  return (await postJson<{ path: string | null }>(port, "current-tracker", { agent })).path
+  return (await postAsAgent<{ path: string | null }>(port, "current-tracker", { agent }))
+    .path
 }
 
 /** The trackers of the workspace `dir` is in, finished ones included */
