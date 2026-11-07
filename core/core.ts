@@ -291,7 +291,15 @@ export class Core implements AgentDirectory {
         const own = known?.harness === "claude" ? known : null
         if (addressAlive(own)) return own
         const socket = claudeSocket(record.session)
-        return socket ? { harness: "claude", socket } : own
+        // The token isn't in Claude's record, so keep the one a hook gave us for
+        // this same socket
+        return socket
+          ? {
+              harness: "claude",
+              socket,
+              ...(own?.socket === socket && own.token && { token: own.token }),
+            }
+          : own
       }
       case "codex":
         // The pid is for telling whether it's alive; a new session's isn't

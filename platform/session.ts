@@ -210,13 +210,37 @@ export function addressAlive(address: Address | null): boolean {
       const pid = basename(address.socket).match(/^(\d+)\.sock$/)?.[1]
       return pid
         ? claudeConfigDirs().some((d) => exists(join(claudeSessionsDir(d), `${pid}.json`)))
-        : exists(address.socket)
+        : (claudeRecordsSocket(address.socket) ?? exists(address.socket))
     }
     case "codex":
       return address.pid === null || processRunning(address.pid)
     case "opencode":
       return opencodeRunning()
   }
+}
+
+/** Whether a running Claude process's record names `socket` as its inbox, else
+ * null. On Windows the inbox is a named pipe, which has no <pid>.sock name to
+ * read a pid from and can't be told apart by stat. */
+function claudeRecordsSocket(socket: string): true | null {
+  for (const dir of claudeConfigDirs().map(claudeSessionsDir)) {
+    let names: string[]
+    try {
+      names = readdirSync(dir)
+    } catch {
+      continue
+    }
+    for (const name of names) {
+      if (!/^[0-9]+[.]json$/.test(name)) continue
+      try {
+        const raw: unknown = JSON.parse(readFileSync(join(dir, name), "utf8"))
+        if (isRecord(raw) && raw.messagingSocketPath === socket) return true
+      } catch {
+        // mid-write, or gone
+      }
+    }
+  }
+  return null
 }
 
 /** The inbox socket of the running Claude process in `session`, from its

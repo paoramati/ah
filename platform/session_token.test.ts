@@ -1,8 +1,16 @@
 import { createServer } from "node:net"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
-import { expect, test } from "vitest"
-import { currentAddress, parseAddress, postTo } from "./session.ts"
+import { expect, test, vi } from "vitest"
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
+import { addressAlive, currentAddress, parseAddress, postTo } from "./session.ts"
+
+// Worker threads don't change what os.homedir() sees, so point the lookup at a temp dir
+let configDirs: string[] = []
+vi.mock("./paths.ts", async (original) => ({
+  ...(await original<typeof import("./paths.ts")>()),
+  claudeConfigDirs: () => configDirs,
+}))
 
 // The named pipe prefix, built without backslash literals
 const BS = String.fromCharCode(92)
@@ -66,5 +74,25 @@ test("the token travels with the address from the CLI to the server", () => {
     expect(currentAddress()).toEqual({ harness: "claude", socket: PIPE + "x" })
   } finally {
     process.env = saved
+  }
+})
+
+test("a pipe is alive while a Claude session record names it", () => {
+  const home = mkdtempSync(join(tmpdir(), "ah-pipe-home-"))
+  try {
+    configDirs = [join(home, ".claude")]
+    const socket = PIPE + "cc-msg-alive-test"
+    const address = { harness: "claude", socket } as const
+    expect(addressAlive(address)).toEqual(false)
+    mkdirSync(join(home, ".claude", "sessions"), { recursive: true })
+    writeFileSync(
+      join(home, ".claude", "sessions", "4242.json"),
+      JSON.stringify({ pid: 4242, sessionId: "s", messagingSocketPath: socket }),
+    )
+    expect(addressAlive(address)).toEqual(true)
+    expect(addressAlive({ harness: "claude", socket: PIPE + "other" })).toEqual(false)
+  } finally {
+    configDirs = []
+    rmSync(home, { recursive: true, force: true })
   }
 })
