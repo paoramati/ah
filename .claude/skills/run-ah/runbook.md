@@ -15,7 +15,6 @@ Windows Claude Code exposes a named pipe (`\\.\pipe\LOCAL\cc-msg-...`, Claude Co
    ```
    git clone https://github.com/paoramati/ah.git C:\projects\ah
    cd C:\projects\ah
-   git checkout windows-native-code     # only until PRs #1, #3, #4 are merged; after that stay on main
    npm install
    git checkout package-lock.json       # npm on Windows rewrites the lockfile
    ```
@@ -62,7 +61,6 @@ ah server stop
 # restore settings.json from settings.json.bak-ah (or remove the ah hooks and crossSessionInbound)
 # remove <project>\.claude\skills junctions; remove C:\projects\ah\bin from the user PATH
 rd /s /q %USERPROFILE%\.local\state\ah
-git -C C:\projects\ah checkout main
 ```
 
 ## Risks

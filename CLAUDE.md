@@ -54,7 +54,9 @@ Baseline failures that are not regressions: Unix-socket test fixtures (EACCES), 
 
 ## Git and PRs
 
-- Until merged: docs/runbook (`windows-native`), code (`windows-native-code`); PRs stacked on the fork: #1 -> #3 -> #4, each retargeted to `main` as the one before merges. After they merge, work on `main` only: new branches off `main`, PRs to `main` on this fork.
+- **`main`** is a pure mirror of upstream (`david-crespo/ah`). Never commit Windows work to it. Sync it: `gh repo sync paoramati/ah --source david-crespo/ah --branch main`.
+- **`windows-native`** is this fork's default and integration branch. A fresh clone gets it. Branch off it (`git switch -c my-change windows-native`) and open PRs **into `windows-native`** on this fork.
+- **Syncing upstream:** add the remote once (`git remote add upstream https://github.com/david-crespo/ah.git`), sync `main` as above, then `git switch windows-native && git merge origin/main` and resolve conflicts there. Keep patches small.
 - Commit messages end with the `Co-Authored-By` line; reference the issue (`Refs #2`).
 - Never force-push or amend pushed commits; add a follow-up commit.
 - Changes to `~/.claude/settings.json` (hooks, `crossSessionInbound: "accept"`) need the user's explicit approval and a backup first; write JSON without a BOM.

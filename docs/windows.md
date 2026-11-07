@@ -7,3 +7,4 @@ This fork runs ah on native Windows 11 with native Windows Claude Code. Upstream
 - **Config script** (PATH, Claude hooks, `crossSessionInbound`): [`.claude/skills/run-ah/apply-ah-config.ps1`](../.claude/skills/run-ah/apply-ah-config.ps1)
 - **Port tracking:** issue #2; HTML view #6, tracker #7, editor #8, setup docs and global skill #5
 - **Not supported on purpose:** dashboard, tab titles, native windows, Rex, jj features, skepsis, LAN access (#10)
+- **Branches:** `main` mirrors upstream and is never committed to; `windows-native` is this fork's default branch. Branch off it and PR into it. Details in `CLAUDE.md`.

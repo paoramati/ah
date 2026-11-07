@@ -111,3 +111,9 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 
 - PR bodies for #1, #3, #4 rewritten to match their contents; checks re-run (tsc, lint clean; tests 13 failed / 267 passed, all baseline). Runbook and CLAUDE.md say to stay on `main` once the PRs merge.
 - Merge order: #1 -> #3 -> #4, retargeting each to `main`. Awaiting the user's confirmation in the terminal (the request came through a page comment).
+
+## Branching strategy (decided with the user)
+
+- `main` = pure mirror of upstream (`david-crespo/ah`, identical at 334f01b when decided). `windows-native` = fork default and integration branch. Feature branches off `windows-native`, PRs into it.
+- #1 and #3 closed as superseded (their content is on `windows-native`); #4 merged into `windows-native`. Replaces the earlier plan to merge #1 -> #3 -> #4 into `main`.
+- Upstream sync: `gh repo sync paoramati/ah --source david-crespo/ah --branch main`, then merge `main` into `windows-native`.

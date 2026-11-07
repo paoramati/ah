@@ -25,7 +25,7 @@ Initiative: run `ah` (local server + CLI, ports 7420 API / 7421 HTML pages) on W
 1. Read `progress.md` for current state, and `CLAUDE.md` in the repo for how the fork works.
 2. Follow `runbook.md`, one step at a time; verify each step.
 3. Log outcome in `progress.md`. If runbook was wrong, fix `runbook.md`.
-4. Repo is cloned at `C:\projects\ah` (upstream `main`). Local changes for the port go on a branch, not main.
+4. Repo is cloned at `C:\projects\ah`. `windows-native` is the fork's default branch; changes go on a branch off it and a PR into it. `main` mirrors upstream and is never committed to (see `CLAUDE.md`, Git and PRs).
 
 ## This session has no ah hooks
 
@@ -41,6 +41,7 @@ Fix, in order:
    ```
 
    Then retry `ah tracker add ...`. Repeat with `UserPromptSubmit` (and add `prompt:'x'`) after a server restart to re-register the session's token so held page messages go out.
+
 3. If `ah` isn't found, the PATH entry is missing: run `.claude/skills/run-ah/apply-ah-config.ps1` (the user must approve; it edits `~/.claude/settings.json`), then start a new session.
 
 ## Set a project up for ah (only when the user asks)
@@ -54,6 +55,7 @@ Do this only when the user explicitly asks to set a project up for ah. Don't do 
    ```
 
    It links ah's `markdown`, `html` and `tracker` skills into `<project>/.claude/skills` as junctions. It leaves existing entries alone. Undo with the same command plus `-Remove` (removes only the links).
+
 2. Tell the user to start a new Claude session in that project; skills load at session start. Check the three skills are listed there.
 3. Check hooks work in that new session: after the first prompt, `ah tracker add` shouldn't say "this agent has no directory" (see the no-hooks section above if it does).
 
@@ -70,5 +72,6 @@ Conventions once linked:
   ```
 
   Statuses: `todo`, `doing`, `done`, `dropped`, `hold`, `question`. `rev` stays blank (no jj on Windows).
+
 - The user clicks the Go icon on an item (shown on hover) to send it to the session. Answer on the page with `ah message respond '<file>' start|progress|done <request ids> --text "..."`, and update the item's status in the file.
 - `ah tracker add` prints "dashboard: not available on this platform"; that is expected. Show the tracker with `ah view`.
