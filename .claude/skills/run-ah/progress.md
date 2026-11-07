@@ -73,3 +73,12 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - [x] Restart behaviour verified live: after `ah server restart` the server has no address, a page message stays `waiting`, and it flushes the moment the session's address is re-registered (any `ah` CLI call from the session, or a hook event). No loss, only delay.
 - [ ] HTML view, tracker, skills (Phase 6), fresh-session hook env check.
 - Noise: markdown view's helix pane tries `hx` via node-pty and logs a spawn error when `hx` is missing (use `--no-editor`).
+
+## Restart and hook results
+
+- [x] Hooked session: after `ah server restart` a page message is held and flushed by the session's next UserPromptSubmit hook (22:34:05.941 hook, 22:34:06.003 delivered). Hook runs silently with the token.
+- [x] Fixed a silent-loss bug: a post to a Windows pipe without the token was logged as delivered. `postToClaude` now throws, so the request stays held.
+- [x] Park / Done buttons, tracker state across restart.
+- Hand-fed hook events (`node -e ... | ah hook agent --harness claude`) are a valid way to test hook behaviour from an unhooked session.
+- Don't run `ah view <file>` from another session to open a file you want to keep bound elsewhere: it rebinds the file. Open the URL with `rundll32 url.dll,FileProtocolHandler <url>`.
+- Still open: tracker items 3-5, `UV_HANDLE_CLOSING` assertion, `ps` warning, editor (#8), skills global (#5), PR merge order.
