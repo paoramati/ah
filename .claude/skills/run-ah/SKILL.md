@@ -1,6 +1,6 @@
 ---
 name: run-ah
-description: Get and keep paoramati/ah (agent host) running on this Windows 11 machine. Holds the runbook, decisions, progress log and known issues for the initiative. Use when asked to run, set up, fix, port or debug ah here.
+description: Set up, run, fix or change `ah` (agent host, the paoramati/ah fork, checked out at C:\projects\ah) on this Windows 11 machine. Holds the verified runbook, config script, progress log and known issues. Use when the user mentions ah, agent host, `ah view`, `ah tracker`, `ah server`, the ah hooks, or the ah Windows port, from any project.
 ---
 
 # run-ah
