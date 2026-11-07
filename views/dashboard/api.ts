@@ -28,6 +28,10 @@ export async function ensureDashboardPage(
     if (raise && (await focusHere()).take) await focusWindow(dashboardUrl(port))
     return await dashboardStatus(port)
   }
+  // The dashboard follows Rex tabs and jj, and its window is the macOS app
+  if (process.platform !== "darwin") {
+    return "dashboard: not available on this platform; show a tracker with `ah view <file>`"
+  }
   await openDashboard(port, otherDisplay)
   return "dashboard: no page was open, opened one"
 }

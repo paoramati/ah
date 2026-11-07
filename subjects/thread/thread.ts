@@ -26,8 +26,12 @@ import {
 function logPath(kind: FileKind, file: string): string {
   const dir = ahStateDir(kind)
   mkdirSync(dir, { recursive: true })
-  // One log per file, named by its absolute path with slashes flattened
-  return join(dir, file.replaceAll("/", "-") + ".comments.jsonl")
+  // One log per file, named by its absolute path with separators flattened. A
+  // Windows path also has backslashes and a drive colon, neither of which can
+  // be in a file name.
+  const flat =
+    process.platform === "win32" ? file.replace(/[/\\:]/g, "-") : file.replaceAll("/", "-")
+  return join(dir, flat + ".comments.jsonl")
 }
 
 /** The one line before the requests in every post: where they're from,

@@ -11,20 +11,31 @@ import { Core, RELAYED } from "./core.ts"
 const inbox = vi.hoisted(() => ({
   posts: [] as { to: Address; text: string }[],
   down: false,
+  /** Claude's record of a session's socket, when a test sets one */
+  record: null as string | null,
+  alive: null as boolean | null,
 }))
-vi.mock("../platform/session.ts", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("../platform/session.ts")>()),
-  postTo: async (to: Address, text: string) => {
-    if (inbox.down) throw new Error("no session")
-    inbox.posts.push({ to, text })
-  },
-}))
+vi.mock("../platform/session.ts", async (importOriginal) => {
+  const original = await importOriginal<typeof import("../platform/session.ts")>()
+  return {
+    ...original,
+    claudeSocket: (session: string) => inbox.record ?? original.claudeSocket(session),
+    addressAlive: (address: Address | null) =>
+      inbox.alive ?? original.addressAlive(address),
+    postTo: async (to: Address, text: string) => {
+      if (inbox.down) throw new Error("no session")
+      inbox.posts.push({ to, text })
+    },
+  }
+})
 
 let dir: string
 let core: Core
 beforeEach(() => {
   inbox.posts = []
   inbox.down = false
+  inbox.record = null
+  inbox.alive = null
   // Saves are debounced; keep them from landing after the dir is gone
   vi.useFakeTimers()
   dir = mkdtempSync(join(tmpdir(), "ah-sessions-"))
@@ -366,4 +377,23 @@ test("hooks tell the agent its trackers, then what changed", async () => {
     `ah: the dashboard now shows ${a} as this workspace's current tracker`,
   )
   expect(await context(hook("UserPromptSubmit"))).toBeNull()
+})
+
+test("a Claude address rebuilt from the session record keeps the token for the same socket", async () => {
+  await report(start("claude", "s1"))
+  const agent = core.agentId({
+    harness: "claude",
+    session: "s1",
+    block: "block:1",
+    process: null,
+  })!
+  const pipe = "pipe-1"
+  core.bind(agent, { harness: "claude", socket: pipe, token: "tok" })
+  // The known address looks dead, so the record's socket is used instead
+  inbox.alive = false
+  inbox.record = pipe
+  expect(core.address("block:1")).toEqual({ harness: "claude", socket: pipe, token: "tok" })
+  // A new process has a new socket: the old token is no use to it
+  inbox.record = "pipe-2"
+  expect(core.address("block:1")).toEqual({ harness: "claude", socket: "pipe-2" })
 })

@@ -2,7 +2,7 @@
 // its root, the directory holding `.jj`.
 
 import { readFileSync, realpathSync, statSync } from "node:fs"
-import { dirname, join, resolve } from "node:path"
+import { dirname, isAbsolute, join, resolve, sep } from "node:path"
 import type { Tab, WorkspaceRoot } from "./model.ts"
 
 export type RootOf = (dir: string) => WorkspaceRoot | null
@@ -19,7 +19,7 @@ export function rootFinder(): RootOf {
     }
   }
   const find = (dir: string): string | null => {
-    if (!dir.startsWith("/")) return null
+    if (!isAbsolute(dir)) return null
     const cached = cache.get(dir)
     if (cached !== undefined) return cached
     const parent = dirname(dir)
@@ -39,7 +39,7 @@ export function openable(path: string, cwd: string): boolean {
   const real = realpathSync(cwd)
   const root = rootFinder()(real)
   const dirs = [real, root, root && defaultWorkspace(root)]
-  return dirs.some((dir) => dir && path.startsWith(dir + "/"))
+  return dirs.some((dir) => dir && path.startsWith(dir.endsWith(sep) ? dir : dir + sep))
 }
 
 /** The default workspace of the repo `root` is a workspace of. A secondary

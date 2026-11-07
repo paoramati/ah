@@ -119,9 +119,22 @@ export async function ensureServer(
 /** Whether the process is a running `ah server serve`, so a stale pid file can't
  * make us kill some unrelated process that reused the pid */
 async function isAhServe(pid: number): Promise<boolean> {
-  const { success, stdout } = await run("ps", ["-p", String(pid), "-o", "command="])
+  const { success, stdout } = await commandLine(pid)
   // ah from PATH, ah.ts from source, or dist/ah.js from the package
-  return success && /\bah(\.[jt]s)? serve\b/.test(stdout)
+  return success && /\bah(\.[jt]s)? (server )?serve\b/.test(stdout)
+}
+
+/** The command line of a process: `ps`, or on Windows, which has none, its
+ * process record */
+async function commandLine(pid: number) {
+  if (process.platform !== "win32") {
+    return await run("ps", ["-p", String(pid), "-o", "command="])
+  }
+  return await run("powershell", [
+    "-NoProfile",
+    "-Command",
+    `(Get-CimInstance Win32_Process -Filter "ProcessId=${pid}").CommandLine`,
+  ])
 }
 
 function kill(pid: number, signal: NodeJS.Signals) {
@@ -173,6 +186,12 @@ export async function stopServer(port: number, files = defaultFiles()): Promise<
   if (!answering && !(await isAhServe(pid))) {
     rmSync(files.pid)
     return "not running (removed a stale pid file)"
+  }
+  // On Windows another system can answer on the port, as WSL does through its
+  // localhost forwarding, and its pid means nothing here: killing it could
+  // stop an unrelated process
+  if (process.platform === "win32" && !(await isAhServe(pid))) {
+    return `port ${port} is answered by a server whose pid (${pid}) isn't an ah here; not stopping it`
   }
   kill(pid, "SIGTERM")
   for (let waited = 0; waited < 3000; waited += 100) {

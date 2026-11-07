@@ -24,7 +24,7 @@
 // working out afterwards why a title was what it was.
 
 import { appendFileSync, existsSync, mkdirSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { dirname, isAbsolute, join } from "node:path"
 import { isOneOf, isRecord, isString, str } from "../platform/guards.ts"
 import type { AgentDirectory } from "../subjects/files/files.ts"
 import {
@@ -291,7 +291,15 @@ export class Core implements AgentDirectory {
         const own = known?.harness === "claude" ? known : null
         if (addressAlive(own)) return own
         const socket = claudeSocket(record.session)
-        return socket ? { harness: "claude", socket } : own
+        // The token isn't in Claude's record, so keep the one a hook gave us for
+        // this same socket
+        return socket
+          ? {
+              harness: "claude",
+              socket,
+              ...(own?.socket === socket && own.token && { token: own.token }),
+            }
+          : own
       }
       case "codex":
         // The pid is for telling whether it's alive; a new session's isn't
@@ -580,7 +588,7 @@ export class Core implements AgentDirectory {
     if (rest === "tracker-status" && req.method === "POST") {
       // { path, status }: park or finish a tracker
       const body: unknown = await req.json().catch(() => null)
-      if (!isRecord(body) || !isString(body.path) || !body.path.startsWith("/"))
+      if (!isRecord(body) || !isString(body.path) || !isAbsolute(body.path))
         return new Response("bad path", { status: 400 })
       if (!isOneOf(["parked", "done"] as const, body.status))
         return new Response("bad status", { status: 400 })
@@ -591,7 +599,7 @@ export class Core implements AgentDirectory {
     if (rest === "trackers" && req.method === "GET") {
       // ?dir=: the trackers of the workspace it's in
       const dir = new URL(req.url).searchParams.get("dir")
-      if (!dir?.startsWith("/")) return new Response("bad dir", { status: 400 })
+      if (!dir || !isAbsolute(dir)) return new Response("bad dir", { status: 400 })
       const root = rootFinder()(dir) ?? dir
       return Response.json({
         root,

@@ -1,0 +1,3 @@
+#!/bin/sh
+# For Git Bash, where Claude Code runs hooks and Bash: ah.cmd is not found by name
+exec node "$(dirname "$0")/../ah.ts" "$@"

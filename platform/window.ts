@@ -134,6 +134,10 @@ export async function showUrl(
   options: WindowOptions,
   live = false,
 ) {
+  // The window app, Dock tiles and focus handling are macOS's (Swift,
+  // lsappinfo, osascript): elsewhere every place is a tab of the default
+  // browser, which takes focus as the OS gives it
+  if (process.platform !== "darwin") return await openInBrowser(url)
   const focus = await focusHere()
   if (place === "window") {
     await openWindow(url, options, focus, live)
@@ -143,6 +147,15 @@ export async function showUrl(
     await run("open", ["-g", url])
     await keepFocus(focus.front)
   }
+}
+
+/** `url` in the default browser, without a shell to parse its & and ? */
+async function openInBrowser(url: string) {
+  const [cmd, ...args] =
+    process.platform === "win32"
+      ? ["rundll32", "url.dll,FileProtocolHandler", url]
+      : ["xdg-open", url]
+  await run(cmd, args)
 }
 
 /** A file's window name: its own name, or its directory's for an index.html,
