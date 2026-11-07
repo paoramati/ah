@@ -26,3 +26,19 @@ Initiative: run `ah` (local server + CLI, ports 7420 API / 7421 HTML pages) on W
 2. Follow `runbook.md`, one step at a time; verify each step.
 3. Log outcome in `progress.md`. If runbook was wrong, fix `runbook.md`.
 4. Repo is cloned at `C:\projects\ah` (upstream `main`). Local changes for the port go on a branch, not main.
+
+## This session has no ah hooks
+
+Symptom: `ah tracker add` says `ah: this agent has no directory`, or a page message stays `waiting`. The session started before the hooks were installed (or the hooks are missing). Nothing is wrong with ah.
+
+Fix, in order:
+
+1. Best: start a new Claude session (hooks and PATH load at start), or `claude --resume` from the same project directory.
+2. Without restarting, from the project directory, run the hook by hand once (it is exactly what the SessionStart hook sends; uses `process.cwd()` so backslashes survive):
+
+   ```
+   node -e "console.log(JSON.stringify({hook_event_name:'SessionStart',session_id:process.env.CLAUDE_CODE_SESSION_ID,cwd:process.cwd()}))" | ah hook agent --harness claude
+   ```
+
+   Then retry `ah tracker add ...`. Repeat with `UserPromptSubmit` (and add `prompt:'x'`) after a server restart to re-register the session's token so held page messages go out.
+3. If `ah` isn't found, the PATH entry is missing: run `.claude/skills/run-ah/apply-ah-config.ps1` (the user must approve; it edits `~/.claude/settings.json`), then start a new session.
