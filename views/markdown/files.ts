@@ -4,9 +4,8 @@
 import { threadKinds } from "../../subjects/thread/kinds.ts"
 import type { FileType, Live } from "../../subjects/files/files.ts"
 import { LiveDoc } from "./doc.ts"
-import { helixCommand } from "./helix_command.ts"
+import { CodeMirrorBackend } from "./codemirror_backend.ts"
 import type { EditorBackend } from "./editor.ts"
-import { PtyBackend } from "./pty.ts"
 
 export class LiveMarkdown implements Live {
   readonly doc: LiveDoc
@@ -36,6 +35,6 @@ export const markdownFiles: FileType<LiveMarkdown> = {
   attach: async (path, pages) =>
     new LiveMarkdown(
       await LiveDoc.open(path, (message) => pages.broadcast(message)),
-      new PtyBackend(path, helixCommand),
+      new CodeMirrorBackend(path),
     ),
 }
