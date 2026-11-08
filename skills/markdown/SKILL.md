@@ -116,16 +116,15 @@ the id is what `ah message respond` takes.
   reply. If an Edit fails to match afterwards, re-read the file. Edit notices
   never arrive on their own: they share a message with the request they are
   context for, on the line before it.
-- ah configures helix (the page's editor pane) to reload external edits and
-  merge them word by word into unsaved text. Where both changed the same
+- The page's editor pane (CodeMirror on this fork) reloads external edits and
+  merges them word by word into unsaved text. Where both changed the same
   words, the merge marks both versions, the user's first: within a line as
   `{~~user's~>yours~~}`, and across lines as git conflict markers labelled
   `mine` and `agent`. Leave resolving them to the user unless asked, and
-  edit around them. Without ah's Steel modules (stock Helix), the pane
-  doesn't reload: once you edit the file, its saves fail until the user runs
-  `:reload`, and a `:w!` writes back the old text. So an edit notice that
-  exactly undoes a recent edit of yours may be a stale pane rather than a
-  decision. Ask before redoing it or accepting it.
+  edit around them. (Only the Helix pane, not used on this fork, can go
+  stale: stock Helix without ah's Steel modules doesn't reload, so an edit
+  notice that exactly undoes a recent edit of yours may be a stale pane. Ask
+  before redoing it.)
 - After editing the file, the page live-updates on its own and flashes the
   changed blocks. Post a short completion summary to the page. General
   answers can be longer and use Markdown. Keep draft-related replies in the
@@ -211,12 +210,10 @@ PR" is a request to change the source, not the draft).
   unsent text; incoming replies appear as toasts without stealing focus.
 - The popover's de-LLM button sends "make this passage sound human" with no
   typing needed; typed text rides along as extra guidance
-- ⌘E (or the ✎ button, top right) toggles the helix pane: real `hx` with the
-  user's normal config and Steel setup, plus auto-save (650ms after typing
-  stops, and on focus lost). It starts on first show and keeps running while
-  hidden; closing the page ends it, and so does a server restart. Of the ⌘-chords,
-  only ⌘S, ⌘J and ⌘K reach helix (as `Cmd-s`, `Cmd-j`, `Cmd-k`); the rest
-  stay with the browser. Everything else reaches helix.
+- ⌘E (or the ✎ button, top right) toggles the editor pane: CodeMirror in the
+  page on this fork (upstream runs real `hx` there), with auto-save (650ms
+  after typing stops, on focus lost, and on ⌘S). It starts on first show and
+  keeps running while hidden.
 - The page live-updates whenever the file changes on disk, flashing what
   changed
 

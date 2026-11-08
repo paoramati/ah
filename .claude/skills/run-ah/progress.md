@@ -72,7 +72,7 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - [x] Chat message from the page delivered and answered (file comment + chat both work).
 - [x] Restart behaviour verified live: after `ah server restart` the server has no address, a page message stays `waiting`, and it flushes the moment the session's address is re-registered (any `ah` CLI call from the session, or a hook event). No loss, only delay.
 - [ ] HTML view, tracker, skills (Phase 6), fresh-session hook env check.
-- Noise: markdown view's helix pane tries `hx` via node-pty and logs a spawn error when `hx` is missing (use `--no-editor`).
+- Noise (resolved in #8): the old Helix pane logged a spawn error without `hx`. The pane is now CodeMirror.
 
 ## Restart and hook results
 
@@ -123,3 +123,8 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 - `ah tracker add` (and `currentTracker`) now register the session from the CLI when the server answers "this agent has no directory": a SessionStart-equivalent event built from `CLAUDE_CODE_SESSION_ID`, the process key, the current directory and the address (with token), then one retry. It prints one stderr line when it does this. Only when the server does not know the session; a known session's directory is never overwritten.
 - Tested live with a fake unregistered session (before: "this agent has no directory"; after: registered, tracker added, exit 0), and unit-tested with a mocked server. Fake session ended and cleaned up.
 - Does not explain why the first coin-catalogue process sent no hooks; it removes the dependency for `tracker add`. Other commands that need the agent's directory still rely on hooks.
+
+## Editor pane (#8)
+
+- Tried Helix 25.07.1 via ConPTY. Needed three fixes (hx.exe name, no pty signals on Windows, binary frames), kept on branch `editor-windows-fixes` (PR #15, closed unmerged). Dropped because agent edits don't reload its pane without the Steel fork.
+- Decision: CodeMirror (PR #16). Typing saves after 650ms and updates the preview; agent edits reload the pane. No comment-from-editor. Packages added to package.json; lockfile merged by hand (only CodeMirror entries) because npm on Windows rewrites it.

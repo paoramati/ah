@@ -8,7 +8,7 @@ Work tracking: issue #2 (port), #5 (setup docs, global skill), #6 HTML view, #7 
 
 Works: markdown views (`ah view file.md`), HTML views, chat and highlight comments sent to the Claude Code session, replies shown on the page, task trackers (Go, Park, Done, SessionStart context), paths with spaces, other drives and UNC.
 
-Not supported, on purpose: dashboard, tab titles, native windows (`--in window` opens a browser tab), Rex, jj features (tracker revs stay blank, #9), skepsis diff review, LAN access (#10). Editor pane needs `hx`; use `--no-editor` unless #8 is resolved.
+Not supported, on purpose: dashboard, tab titles, native windows (`--in window` opens a browser tab), Rex, jj features (tracker revs stay blank, #9), skepsis diff review, LAN access (#10). The editor pane is CodeMirror, running in the page (no `hx`, no pty), chosen in #8; it has no vim keys. The Helix pane was tried and dropped (PR #15, closed; branch `editor-windows-fixes` keeps the fixes): it needs `hx.exe`, ConPTY needs the fixes in that branch, and agent edits don't reload it without the Steel fork. `helix_command.ts`, `pty.ts` and `terminal_pane.ts` are still in the tree, unused and unfixed on Windows.
 
 ## Commands
 

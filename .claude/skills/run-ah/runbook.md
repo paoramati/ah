@@ -2,7 +2,7 @@
 
 Everything here was run and checked on this machine (Windows 11, Node 24.8, Claude Code 2.1.319) unless marked untested. Repo notes: `CLAUDE.md` at the repo root. Port tracking: issue #2.
 
-Scope: markdown and HTML views, chat and highlight comments to the Claude Code session, task trackers. Not supported: dashboard, tab titles, native windows, Rex, jj features, skepsis, LAN (#10). Editor pane: see #8.
+Scope: markdown and HTML views, chat and highlight comments to the Claude Code session, task trackers. Not supported: dashboard, tab titles, native windows, Rex, jj features, skepsis, LAN (#10). Editor pane: CodeMirror (#8), no install.
 
 ## Why native
 
@@ -51,7 +51,7 @@ Windows Claude Code exposes a named pipe (`\\.\pipe\LOCAL\cc-msg-...`, Claude Co
 | Request logged `delivered` but never arrived         | Old build. Pull `windows-native-code` (fix: refuse posts without a token)                                    |
 | `... is outside this directory and its jj workspace` | `ah` only serves files under the current directory; `cd` to the project                                      |
 | `ah server stop` says the pid isn't an ah            | Another system answers on 7420 (e.g. a WSL server). Stop that one                                            |
-| Spawn error from `node-pty` / `hx` on markdown pages | Helix isn't installed; use `--no-editor` (#8)                                                                |
+| Spawn error from `node-pty` / `hx` on markdown pages | Shouldn't happen: the default pane is CodeMirror and needs no `hx` (#8). Rebuild and restart the server if it does   |
 | 7420 answers but `ah` shows no server                | A server on another port or stale pid file: `ah server status`, `ah server restart`                          |
 
 ## Rollback
