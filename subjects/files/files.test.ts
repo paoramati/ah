@@ -1,10 +1,10 @@
 import { EventEmitter } from "node:events"
 import { mkdtemp, rm, writeFile } from "node:fs/promises"
-import { createServer } from "node:net"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import type { WebSocket } from "ws"
+import { testInbox } from "../../platform/test_inbox.ts"
 import { GRACE_MS } from "../../platform/presence.ts"
 import { pathOf } from "../id.ts"
 import type { RequestKinds } from "../thread/events.ts"
@@ -152,16 +152,9 @@ test("held requests go out after a restart, to the agent there now", async () =>
   directory.bindFile(a, "block:1")
   await (await files.thread(a)).request({ kind: "chat", text: "hi", args: {} })
 
-  const posts: string[] = []
-  const inbox = join(dir, "inbox.sock")
-  const server = createServer((conn) => {
-    let text = ""
-    conn.on("data", (chunk) => (text += chunk))
-    conn.on("end", () => (posts.push(text), conn.end()))
-  })
-  await new Promise<void>((resolve) => server.listen(inbox, resolve))
+  const { posts, address, close } = await testInbox(dir)
   try {
-    directory.addresses.set("block:1", { harness: "claude", socket: inbox })
+    directory.addresses.set("block:1", address)
     // A new server knows the file only from the directory's held paths
     const after = new Files(7420, type, directory)
     after.refresh([...directory.held])
@@ -169,7 +162,7 @@ test("held requests go out after a restart, to the agent there now", async () =>
     expect(posts[0]).toContain("hi")
     await vi.waitFor(() => expect([...directory.held]).toEqual([]))
   } finally {
-    server.close()
+    close()
   }
 })
 

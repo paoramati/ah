@@ -14,7 +14,7 @@ Not supported, on purpose: dashboard, tab titles, native windows (`--in window` 
 
 ```
 npm install                 # then: git checkout package-lock.json (npm on Windows rewrites it)
-npm test                    # ~16 baseline failures on Windows, see below
+npm test                    # should pass on Windows; some tests are skipped there, see below
 npm run tsc
 npm run lint
 npx oxfmt --write <file>    # repo formatter (no semicolons, width 92)
@@ -25,7 +25,7 @@ ah tracker add <file> [--title T --goal G]
 ah message send|respond|pending ...
 ```
 
-Baseline failures that are not regressions: Unix-socket test fixtures (EACCES), `ai`/`codex` CLIs missing, `os.homedir()` env override in worker threads, file modes (0600), jj-ignore paths.
+Tests skipped on Windows, on purpose: fake `ai`/`codex` CLIs written as sh scripts (tab titles and Codex aren't supported), a session that never hangs up (a named pipe closes when the client finishes writing), the Helix pane test (symlinks, and the pane isn't used). Socket fixtures use `platform/test_inbox.ts`, which is a named pipe plus token on Windows.
 
 ## How delivery works (read before touching messaging)
 

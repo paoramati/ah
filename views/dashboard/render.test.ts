@@ -1,6 +1,6 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
-import { join } from "node:path"
+import { join, sep } from "node:path"
 import { test } from "vitest"
 import { ansiToHtml } from "./ansi.ts"
 import { isIgnored, opHeadsDir, SnapshotWatcher } from "./jj.ts"
@@ -83,7 +83,7 @@ test("isIgnored skips jj state and build output anywhere in the tree", () => {
       "target/debug/app",
       "application/src/x",
       "targets.md",
-    ].map((p) => isIgnored(p)),
+    ].map((p) => isIgnored(p.split("/").join(sep))),
     [false, true, true, true, false, false],
   )
 })

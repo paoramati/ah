@@ -1,8 +1,8 @@
 import { mkdtemp, rm, writeFile } from "node:fs/promises"
-import { createServer } from "node:net"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { afterEach, beforeEach, expect, test } from "vitest"
+import { type InboxAddress, testInbox } from "../../platform/test_inbox.ts"
 import { LiveDoc } from "../../views/markdown/doc.ts"
 import { parseActivity, parseRequest } from "./events.ts"
 import { threadKinds } from "./kinds.ts"
@@ -21,24 +21,7 @@ afterEach(async () => {
   await rm(dir, { recursive: true })
 })
 
-/** A stand-in for a session's inbox socket: what each connection wrote */
-async function inbox() {
-  const socket = join(dir, "inbox.sock")
-  const posts: string[] = []
-  const server = createServer((conn) => {
-    let text = ""
-    conn.on("data", (chunk) => (text += chunk))
-    conn.on("end", () => {
-      posts.push(text)
-      conn.end()
-    })
-  })
-  await new Promise<void>((resolve, reject) => {
-    server.on("error", reject)
-    server.listen(socket, resolve)
-  })
-  return { socket, posts, close: () => server.close() }
-}
+const inbox = () => testInbox(dir)
 
 /** A thread on a markdown file, set up as the markdown backend does */
 const markdownThread = (file: Parameters<typeof Thread.open>[0], doc: LiveDoc) =>
@@ -67,7 +50,7 @@ test("a request goes to the bound session, rendered, after the edits it follows"
     const { path, doc } = await markdownFile("hello world\n")
     const file = {
       path,
-      address: () => ({ harness: "claude" as const, socket: session.socket }),
+      address: () => session.address,
     }
     const thread = await markdownThread(file, doc)
     await writeFile(path, "hello there\n")
@@ -121,7 +104,7 @@ test("requests no agent took go to the next one, unless handled by then", async 
   const agent = await inbox()
   try {
     const { path, doc } = await markdownFile("text\n")
-    let address: { harness: "claude"; socket: string } | null = null
+    let address: InboxAddress | null = null
     const sent: { agentConnected: boolean }[] = []
     const thread = await Thread.open(
       { path, address: () => address },
@@ -144,7 +127,7 @@ test("requests no agent took go to the next one, unless handled by then", async 
     await thread.activity(
       parseActivity({ phase: "start", requests: [second.request.id], workId: "w1" }),
     )
-    address = { harness: "claude", socket: agent.socket }
+    address = agent.address
     await thread.refresh()
     expect(sent.at(-1)?.agentConnected).toEqual(true)
     expect(agent.posts.length).toEqual(1)
@@ -162,13 +145,13 @@ test("a request no agent took is still held after a restart", async () => {
   const agent = await inbox()
   try {
     const { path, doc } = await markdownFile("text\n")
-    let address: { harness: "claude"; socket: string } | null = null
+    let address: InboxAddress | null = null
     const file = { path, address: () => address }
     const before = await markdownThread(file, doc)
     const held = await before.request(
       parseRequest({ kind: "chat", text: "one" }, threadKinds),
     )
-    address = { harness: "claude", socket: agent.socket }
+    address = agent.address
     const sent = await before.request(
       parseRequest({ kind: "chat", text: "two" }, threadKinds),
     )
@@ -189,7 +172,7 @@ test("a held request keeps the edit notice it came with", async () => {
   const agent = await inbox()
   try {
     const { path, doc } = await markdownFile("hello world\n")
-    let address: { harness: "claude"; socket: string } | null = null
+    let address: InboxAddress | null = null
     const holds: boolean[] = []
     const thread = await Thread.open(
       { path, address: () => address },
@@ -204,7 +187,7 @@ test("a held request keeps the edit notice it came with", async () => {
     )
     await writeFile(path, "hello there\n")
     await thread.request(parseRequest({ kind: "chat", text: "one" }, threadKinds))
-    address = { harness: "claude", socket: agent.socket }
+    address = agent.address
     await thread.refresh()
     expect(holds).toEqual([true, false])
     const content = JSON.parse(agent.posts[0].trim()).message.content
