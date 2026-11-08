@@ -59,3 +59,42 @@ Answer these before writing product code. Each is a command to run and a result 
 ## Out of scope
 
 Acting on the focus (Go, Park from the hub), anything that needs Rex, and macOS behaviour.
+
+## Spike results (2026-11-08)
+
+| # | Question | Result |
+| --- | --- | --- |
+| 1 | Does a foreground hook fire? | **Yes.** `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` reported each change with pid, process name and window class, with no delay (launching Paint and a dialog showed up at once). |
+| 2 | Can a window be tied to an agent through the process tree? | **No, for Windows Terminal.** All four running agents were children of one `WindowsTerminal.exe` (one pid), in different PowerShell processes. The foreground pid is the same for every terminal window. |
+| 3 | What does UI Automation say? | **There are five separate Windows Terminal windows, one tab each, in that one process.** Each window's title is its Claude session's title (for example "Issue 8 tracker"), so a window *is* one agent, and its title says which. |
+| 4 | Cost | **About 0.3% of the machine** for the spike's polling loop (0.5 s of CPU over 15 s). The real watcher uses a message loop, which should be lower. |
+
+### The finding that changed the plan
+
+The process tree is the wrong tool here; the window title is the right one. Claude Code puts the session's title in the terminal window title and writes the same title to its transcript (`~/.claude/projects/<project>/<session>.jsonl`, `"type":"ai-title"`). So: foreground terminal window's title, matched to the live Claude agent whose latest `ai-title` is the same, gives the agent and its `cwd`.
+
+### Decision
+
+Built the window-level version (PR "Follow which terminal window is in front"). Not built: several tabs in one window (not how this machine is used, and UIA tab selection was not needed), and hub highlighting (the hub is a separate PR; this leaves the data at `GET /core/focus` and `ah focus now`).
+
+### Built
+
+- `platform/focus_win.ps1`: the watcher (message loop, 5 s re-report, terminal-class windows only, title only, `-Log` to diagnose).
+- `core/focus.ts`, `POST` and `GET /core/focus`: title to agent to workspace, held in memory, ambiguous or unknown titles keep the previous answer, a report is "current" for 30 s.
+- `ah focus start|stop|status|now`.
+
+### Checked
+
+- Real titles from the five open terminal windows posted through the watcher's own HTTP code mapped to the right agents and workspaces ("Issue 8 tracker" to `ah`, "Test.md" to `ah-scratch`, "Task list" to `jarvis`, "Restarting the AH server" to `coin-catalogue-matching`). "Windows PowerShell" and a made-up title kept the previous answer.
+- `ah focus start`, `status` from a separate command, a second `start` (no double), `now`, `stop` (pid file removed).
+- 13 new tests (title reading, matching, glyph stripping, staleness, the start script).
+
+### Not checked: the live loop with a real focus change
+
+The desktop foreground here was a window with no class or title (the watcher's log said so), so no terminal could be brought to the front and the hook could not be seen reporting a real switch end to end. The pieces each work (the hook fires on foreground changes, the posting code and matching work on real titles), but "switch windows and `ah focus now` follows" has not been seen. To check on a live desktop: `ah focus start`, click between two terminal windows, run `ah focus now` each time. If it doesn't follow, `powershell -File platform\focus_win.ps1 -Port 7420 -Log C:\temp\focus.log` shows what the watcher sees.
+
+### Still open
+
+- The hub marking the focused workspace (after the hub PR).
+- Making the agent's "current tracker" notice use the focus (changes what agents are told: its own PR).
+- Titles that two sessions share can't be told apart; the matcher says nothing rather than guessing.
