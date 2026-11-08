@@ -117,6 +117,22 @@ export class Trackers {
     )
   }
 
+  /** Every workspace that has trackers, for the hub page: each with its
+   * current, active, parked and done ones, the one used most recently first */
+  workspaces(now = Date.now()) {
+    const all = [...this.#records.keys()].flatMap((root) => {
+      const listed = this.get(root, now)
+      const done = this.done(root)
+      if (!listed.active.length && !listed.parked.length && !done.length) return []
+      const latest = Math.max(
+        0,
+        ...[...listed.active, ...listed.parked, ...done].map((e) => e.lastOpen),
+      )
+      return [{ root, ...listed, done, latest }]
+    })
+    return all.sort((a, b) => b.latest - a.latest)
+  }
+
   /** The current tracker's file, unless it's gone */
   currentPath(root: WorkspaceRoot): string | null {
     const current = this.#records.get(root)?.current ?? null

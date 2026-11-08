@@ -128,3 +128,7 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 
 - Tried Helix 25.07.1 via ConPTY. Needed three fixes (hx.exe name, no pty signals on Windows, binary frames), kept on branch `editor-windows-fixes` (PR #15, closed unmerged). Dropped because agent edits don't reload its pane without the Steel fork.
 - Decision: CodeMirror (PR #16). Typing saves after 650ms and updates the preview; agent edits reload the pane. No comment-from-editor. Packages added to package.json; lockfile merged by hand (only CodeMirror entries) because npm on Windows rewrites it.
+
+## Tracker hub (#21)
+
+- `/view/hub/` (also `/` off macOS, and `ah tracker hub`): every workspace's trackers with item counts, progress, current marked, parked and done collapsed, refreshed every 5s. Code: `views/hub/`, `core/tracker_summary.ts`, `Trackers.workspaces()`. Screenshots in `docs/screenshots/`.
