@@ -10,7 +10,7 @@ This is a fork of [david-crespo/ah](https://github.com/david-crespo/ah) that run
 
 **What works:** markdown and HTML views with chat and highlight comments sent to your Claude Code session, replies shown on the page, and task trackers (Go, Park, Done). It works with spaces in paths, other drives and UNC paths, and survives a server restart.
 
-**What doesn't, on purpose:** the dashboard, tab titles, native windows (pages open in a browser tab instead), Rex, jj features (tracker revs stay blank), skepsis diff review and LAN access. The embedded editor is CodeMirror in the page instead of Helix, so no external editor is needed (it has no vim keys, and `--no-editor` still turns it off). Only Claude Code is tested; the Codex and OpenCode code paths are untouched and untested on Windows.
+**What doesn't, on purpose:** the dashboard, tab titles, native windows (`--in window` opens a chromeless Edge or Chrome app window instead; set `AH_APP_WINDOW=0` for a tab), Rex, jj features (tracker revs stay blank), skepsis diff review and LAN access. The embedded editor is CodeMirror in the page instead of Helix, so no external editor is needed (it has no vim keys, and `--no-editor` still turns it off). Only Claude Code is tested; the Codex and OpenCode code paths are untouched and untested on Windows.
 
 **Quick start** (needs Node 24 and Claude Code 2.1.234 or newer):
 

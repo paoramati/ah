@@ -128,3 +128,8 @@ Test status: 16 failed / 263 passed / 8 skipped (was 21 failed). Remaining failu
 
 - Tried Helix 25.07.1 via ConPTY. Needed three fixes (hx.exe name, no pty signals on Windows, binary frames), kept on branch `editor-windows-fixes` (PR #15, closed unmerged). Dropped because agent edits don't reload its pane without the Steel fork.
 - Decision: CodeMirror (PR #16). Typing saves after 650ms and updates the preview; agent edits reload the pane. No comment-from-editor. Packages added to package.json; lockfile merged by hand (only CodeMirror entries) because npm on Windows rewrites it.
+
+## Dashboard equivalent (#21)
+
+- Step 1 done: `--in window` opens a chromeless Edge/Chrome app window on Windows (`platform/window.ts`, `windowsAppCommand`); a page already open (live) is left alone, since there is no pid-to-window focus as on macOS. Opt-out `AH_APP_WINDOW=0`. Checked live: window opens titled by the page, repeat open does not duplicate, tracker pages open too.
+- Not done: tracker hub page, tray app, follow-focus (left for the user to choose).

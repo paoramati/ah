@@ -22,8 +22,9 @@
 //   bounds start at the primary screen's top left with y going down, while
 //   NSScreen frames start at its bottom left with y going up.
 
+import { spawn } from "node:child_process"
 import { cpSync, existsSync, rmSync, statSync } from "node:fs"
-import { basename, dirname, join } from "node:path"
+import { basename, dirname, join, win32 } from "node:path"
 import { assetPath } from "./assets.ts"
 import { die } from "./cli.ts"
 import { type Focus, activatePid, focusHere, keepFocus } from "./focus.ts"
@@ -137,6 +138,14 @@ export async function showUrl(
   // The window app, Dock tiles and focus handling are macOS's (Swift,
   // lsappinfo, osascript): elsewhere every place is a tab of the default
   // browser, which takes focus as the OS gives it
+  if (process.platform === "win32" && place === "window") {
+    // A window already showing a live page keeps itself current; there is no
+    // way here to bring it forward (no pid-to-window, as on macOS), and a
+    // second one would only duplicate it
+    if (live) return
+    const command = windowsAppCommand(url)
+    if (command) return openAppWindow(command)
+  }
   if (process.platform !== "darwin") return await openInBrowser(url)
   const focus = await focusHere()
   if (place === "window") {
@@ -147,6 +156,47 @@ export async function showUrl(
     await run("open", ["-g", url])
     await keepFocus(focus.front)
   }
+}
+
+/** Edge or Chrome, where Windows puts them: Edge first, since it ships with
+ * Windows. A chromeless app window is what `--app=URL` gives. */
+export function windowsAppBrowser(
+  env: NodeJS.ProcessEnv = process.env,
+  exists: (path: string) => boolean = existsSync,
+): string | null {
+  const bases = [env["ProgramFiles(x86)"], env.ProgramFiles, env.LOCALAPPDATA]
+  const apps = [
+    ["Microsoft", "Edge", "Application", "msedge.exe"],
+    ["Google", "Chrome", "Application", "chrome.exe"],
+  ]
+  for (const app of apps) {
+    for (const base of bases) {
+      if (!base) continue
+      const path = win32.join(base, ...app)
+      if (exists(path)) return path
+    }
+  }
+  return null
+}
+
+/** The command that opens `url` as an app window on Windows, or null to use
+ * a tab: AH_APP_WINDOW=0 turns it off, and no Edge or Chrome means no window.
+ * The URL is one argument, so its & and ? need no quoting. */
+export function windowsAppCommand(
+  url: string,
+  env: NodeJS.ProcessEnv = process.env,
+  exists: (path: string) => boolean = existsSync,
+): [string, string[]] | null {
+  if (env.AH_APP_WINDOW === "0") return null
+  const browser = windowsAppBrowser(env, exists)
+  return browser ? [browser, [`--app=${url}`]] : null
+}
+
+/** An app window of Edge or Chrome, which isn't waited for: the first one
+ * starts the browser, which then runs until it is closed */
+function openAppWindow(command: [string, string[]]) {
+  const [cmd, args] = command
+  spawn(cmd, args, { detached: true, stdio: "ignore", windowsHide: false }).unref()
 }
 
 /** `url` in the default browser, without a shell to parse its & and ? */
