@@ -88,7 +88,7 @@ async function openPane(file: string, env: Record<string, string>, socket: Socke
   return pane
 }
 
-describe.skipIf(!hx)(
+describe.skipIf(!hx || process.platform === "win32")(
   "helix pane",
   () => {
     let dir: string

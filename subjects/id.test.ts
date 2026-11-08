@@ -21,7 +21,10 @@ test("an id names its file, and only ah can make one", () => {
   expect(id.startsWith("2026-10-01-plan~")).toEqual(true)
   expect(fileId(path)).toEqual(id)
   expect(pathOf(id)).toEqual(path)
-  expect(statSync(join(dir, "ah", "url-key")).mode & 0o777).toEqual(0o600)
+  // Windows has no unix file modes
+  if (process.platform !== "win32") {
+    expect(statSync(join(dir, "ah", "url-key")).mode & 0o777).toEqual(0o600)
+  }
   // Another path under the same signature, or a made-up one
   const [, , signature] = id.split("~")
   const other = Buffer.from("/Users/me/.ssh/id_ed25519").toString("base64url")

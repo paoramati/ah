@@ -180,23 +180,26 @@ async function withAi<T>(script: string | null, run: () => Promise<T>): Promise<
   }
 }
 
-test("generateSummary returns the label", async () => {
+test.skipIf(process.platform === "win32")("generateSummary returns the label", async () => {
   const result = await withAi("/bin/cat > /dev/null; echo ' Tab titles '", () =>
     generateSummary(payload),
   )
   expect(result).toEqual({ summary: "Tab titles" })
 })
 
-test("generateSummary says why there's no label", async () => {
-  expect(await withAi(null, () => generateSummary(payload))).toEqual({
-    skipped: "ai not found",
-  })
-  expect(
-    await withAi("/bin/cat > /dev/null; echo 'no key for luna' >&2; exit 3", () =>
-      generateSummary(payload),
-    ),
-  ).toEqual({ skipped: "ai exited 3: no key for luna" })
-  expect(await withAi("/bin/cat > /dev/null", () => generateSummary(payload))).toEqual({
-    skipped: "ai returned nothing",
-  })
-})
+test.skipIf(process.platform === "win32")(
+  "generateSummary says why there's no label",
+  async () => {
+    expect(await withAi(null, () => generateSummary(payload))).toEqual({
+      skipped: "ai not found",
+    })
+    expect(
+      await withAi("/bin/cat > /dev/null; echo 'no key for luna' >&2; exit 3", () =>
+        generateSummary(payload),
+      ),
+    ).toEqual({ skipped: "ai exited 3: no key for luna" })
+    expect(await withAi("/bin/cat > /dev/null", () => generateSummary(payload))).toEqual({
+      skipped: "ai returned nothing",
+    })
+  },
+)
