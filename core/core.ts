@@ -45,6 +45,12 @@ import {
   type Route,
 } from "./model.ts"
 import { Notices, type Showing, startContext } from "./notices.ts"
+import {
+  candidates,
+  type Focused,
+  isCurrent as isFocusCurrent,
+  matchWindow,
+} from "./focus.ts"
 import { Trackers } from "./trackers.ts"
 import { focusedBlock, pickBlock, readTuis } from "./tuis.ts"
 import { rootFinder } from "./workspace.ts"
@@ -128,6 +134,8 @@ export const RELAYED =
 export class Core implements AgentDirectory {
   readonly registry: Registry
   readonly trackers: Trackers
+  /** The agent whose terminal window was last reported in front (focus.ts) */
+  #focused: Focused | null = null
   /** By agent id: where it can be reached, from the last `open` or hook
    * that said */
   #addresses = new Map<string, Address>()
@@ -557,6 +565,19 @@ export class Core implements AgentDirectory {
     }
   }
 
+  /** What the hub and `ah focus now` read: the agent last reported in front, its
+   * workspace, and whether the report is still current; null before any */
+  #focusReply() {
+    const f = this.#focused
+    if (!f) return null
+    return {
+      agent: f.agent,
+      workspace: this.trackers.workspaceOf(f.agent),
+      at: f.at,
+      current: isFocusCurrent(f),
+    }
+  }
+
   /** `rest` is the path after /core/ */
   async handle(req: Request, rest: string): Promise<Response> {
     if (rest === "event" && req.method === "POST") {
@@ -607,6 +628,17 @@ export class Core implements AgentDirectory {
         done: this.trackers.done(root),
       })
     }
+    if (rest === "focus" && req.method === "POST") {
+      // { title }: a terminal window came to the front. The title is matched
+      // against the agents' session titles and is never kept or logged.
+      const body: unknown = await req.json().catch(() => null)
+      if (!isRecord(body) || !isString(body.title))
+        return new Response("bad title", { status: 400 })
+      const agent = matchWindow(body.title, candidates(this.registry.agents))
+      if (agent) this.#focused = { agent, at: Date.now() }
+      return Response.json(this.#focusReply())
+    }
+    if (rest === "focus" && req.method === "GET") return Response.json(this.#focusReply())
     if (rest === "agents-near" && req.method === "GET") {
       // ?block=: the live agents in its tab, in its layout order
       const block = new URL(req.url).searchParams.get("block")
