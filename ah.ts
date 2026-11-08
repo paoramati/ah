@@ -38,7 +38,8 @@ import { Core } from "./core/core.ts"
 import { TitleSetter } from "./core/tabtitle/setter.ts"
 import { assetPath } from "./platform/assets.ts"
 import { boxCss } from "./views/dashboard/box.ts"
-import { die, portOption } from "./platform/cli.ts"
+import { callServer, die, portOption, serverUrl } from "./platform/cli.ts"
+import { runningWatcher, startWatcher, stopWatcher } from "./platform/focus_watcher.ts"
 import { scrubSessionEnv } from "./platform/session.ts"
 import { frameAncestors, gateHeaders, requestGate } from "./platform/origin.ts"
 import { themeCss } from "./views/theme.ts"
@@ -181,7 +182,9 @@ async function serve(port: number) {
   const pageRoute = (pathname: string) => pathname.match(/^\/view\/html\/(.*)$/)?.[1]
 
   const cssResponse = (text: string) =>
-    new Response(text, { headers: { "content-type": "text/css; charset=utf-8" } })
+    new Response(text, {
+      headers: { "content-type": "text/css; charset=utf-8" },
+    })
 
   const handler = (req: Request) => {
     const { pathname } = new URL(req.url)
@@ -367,7 +370,57 @@ const debug = new Command("debug").description(
 )
 debug.addCommand(debugTabs)
 debug.addCommand(debugAgents)
-for (const command of [view, message, tracker, workspace, dashboard, server, hook, debug])
+const focus = new Command("focus").description(
+  "Follow which terminal window is in front (Windows): the agent in it, and its workspace",
+)
+focus
+  .command("start")
+  .summary("Start reporting the focused terminal window")
+  .addOption(portOption())
+  .action(async ({ port }) => console.log(await startWatcher(port)))
+focus
+  .command("stop")
+  .summary("Stop reporting")
+  .addOption(portOption())
+  .action(async ({ port }) => console.log(await stopWatcher(port)))
+focus
+  .command("status")
+  .summary("Whether the watcher is running")
+  .addOption(portOption())
+  .action(async ({ port }) => {
+    const pid = await runningWatcher(port)
+    console.log(pid === null ? "not running" : `running, pid ${pid}`)
+  })
+focus
+  .command("now")
+  .summary("The agent and workspace last reported in front")
+  .description(
+    "Prints the workspace of the terminal window last reported in front, with (stale) if the report is over 30 seconds old. Says so if none has been reported.",
+  )
+  .addOption(portOption())
+  .action(async ({ port }) => {
+    if (!(await status(port))) die("ah focus now: server not running")
+    const f = await callServer<{
+      agent: string
+      workspace: string | null
+      at: number
+      current: boolean
+    } | null>(serverUrl(port, "core/focus"))
+    if (!f) return console.log("nothing reported yet")
+    console.log(`${f.workspace ?? f.agent}${f.current ? "" : " (stale)"}`)
+  })
+
+for (const command of [
+  view,
+  message,
+  tracker,
+  workspace,
+  dashboard,
+  server,
+  focus,
+  hook,
+  debug,
+])
   program.addCommand(command)
 
 // `-h` is enough; no `help` subcommand, which isn't inherited, so at every
