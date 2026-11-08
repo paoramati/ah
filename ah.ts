@@ -39,6 +39,7 @@ import { TitleSetter } from "./core/tabtitle/setter.ts"
 import { assetPath } from "./platform/assets.ts"
 import { boxCss } from "./views/dashboard/box.ts"
 import { die, portOption } from "./platform/cli.ts"
+import { runningTray, startTray, stopTray } from "./platform/tray.ts"
 import { scrubSessionEnv } from "./platform/session.ts"
 import { frameAncestors, gateHeaders, requestGate } from "./platform/origin.ts"
 import { themeCss } from "./views/theme.ts"
@@ -362,12 +363,44 @@ server
     console.log(`log: ${defaultFiles().log}`)
   })
 
+const tray = new Command("tray").description(
+  "The Windows taskbar icon: whether the server is up, how many pages are open, and a menu to open the tracker hub or restart the server",
+)
+tray
+  .command("start")
+  .summary("Show the tray icon")
+  .addOption(portOption())
+  .action(async ({ port }) => console.log(await startTray(port)))
+tray
+  .command("stop")
+  .summary("Remove the tray icon")
+  .addOption(portOption())
+  .action(async ({ port }) => console.log(await stopTray(port)))
+tray
+  .command("status")
+  .summary("Whether the tray icon is running")
+  .addOption(portOption())
+  .action(async ({ port }) => {
+    const pid = await runningTray(port)
+    console.log(pid === null ? "not running" : `running, pid ${pid}`)
+  })
+
 const debug = new Command("debug").description(
   "Inspect how ah sees Rex tabs and the agents in them",
 )
 debug.addCommand(debugTabs)
 debug.addCommand(debugAgents)
-for (const command of [view, message, tracker, workspace, dashboard, server, hook, debug])
+for (const command of [
+  view,
+  message,
+  tracker,
+  workspace,
+  dashboard,
+  server,
+  tray,
+  hook,
+  debug,
+])
   program.addCommand(command)
 
 // `-h` is enough; no `help` subcommand, which isn't inherited, so at every
