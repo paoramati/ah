@@ -20,6 +20,7 @@ npm run lint
 npx oxfmt --write <file>    # repo formatter (no semicolons, width 92)
 ah server restart           # bin\ah.cmd (cmd/PowerShell) or bin/ah (Git Bash) on PATH
 ah server status            # ports 127.0.0.1:7420 (API) and :7421 (HTML pages)
+ah tray start|stop|status   # Windows taskbar icon: server up/down, pages open, menu (#21)
 ah view <file> --in tab
 ah tracker add <file> [--title T --goal G]
 ah message send|respond|pending ...
