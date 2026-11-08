@@ -41,20 +41,6 @@ export function parsePtyMessage(text: string): PtyMessage | null {
 }
 
 /** Every terminal editor open on one file */
-/** Windows ptys take no signals: kill() with none ends the process */
-function hangUp(pty: IPty) {
-  if (process.platform === "win32") pty.kill()
-  else pty.kill("SIGHUP")
-}
-
-/** Make the editor repaint. Off Windows, a SIGWINCH; ConPTY has no signals, so
- * nudge the size and put it back, which the editor sees as a resize */
-function redraw(pty: IPty, cols: number, rows: number) {
-  if (process.platform !== "win32") return pty.kill("SIGWINCH")
-  pty.resize(Math.max(20, cols) + 1, Math.max(5, rows))
-  setTimeout(() => pty.resize(Math.max(20, cols), Math.max(5, rows)), 50)
-}
-
 export class PtyBackend implements EditorBackend {
   readonly file: string
   readonly #command: TerminalCommand
@@ -112,10 +98,7 @@ export class PtyBackend implements EditorBackend {
     )
 
     pty.onData((data) => {
-      // node-pty on Windows ignores `encoding: null` and gives strings, which
-      // would go out as text frames the page ignores
-      if (ws.readyState === ws.OPEN)
-        ws.send(typeof data === "string" ? Buffer.from(data) : data)
+      if (ws.readyState === ws.OPEN) ws.send(data)
     })
     pty.onExit(({ exitCode }) => {
       this.#ptys.delete(pty)
@@ -135,11 +118,11 @@ export class PtyBackend implements EditorBackend {
         // A same-size resize raises no SIGWINCH, so send one: helix clears
         // and repaints everything on any resize event
         console.error(`ah: redraw requested by the page (${cols}x${rows})`)
-        redraw(pty, cols, rows)
+        pty.kill("SIGWINCH")
       }
     })
     const hangup = () => {
-      if (this.#ptys.has(pty)) hangUp(pty)
+      if (this.#ptys.has(pty)) pty.kill("SIGHUP")
     }
     ws.on("close", hangup)
     ws.on("error", hangup)
@@ -148,6 +131,6 @@ export class PtyBackend implements EditorBackend {
   /** Hang up every pane, for closing the file */
   close() {
     this.#closed = true
-    for (const pty of this.#ptys) hangUp(pty)
+    for (const pty of this.#ptys) pty.kill("SIGHUP")
   }
 }
