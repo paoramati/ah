@@ -316,6 +316,20 @@ tracker
     if (parked.length) console.log(`parked:\n${parked.map((p) => `  ${p}`).join("\n")}`)
   })
 
+tracker
+  .command("hub")
+  .summary("Open the page listing every workspace's trackers")
+  .description(
+    "Open the tracker hub: every workspace's trackers with their item counts, refreshed live, in a window (a tab where there are no windows). It is the front page of the server on platforms without the dashboard.",
+  )
+  .addOption(portOption())
+  .action(async ({ port }) => {
+    if (!(await status(port))) die("ah tracker hub: server not running")
+    const url = serverUrl(port, "view/hub/")
+    await showUrl("window", url, { name: "Trackers", badge: "T", color: "#0d9488" })
+    console.log(url)
+  })
+
 for (const [name, to, summary, description] of [
   [
     "park",

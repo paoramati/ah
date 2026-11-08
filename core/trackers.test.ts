@@ -219,3 +219,26 @@ test("pruning forgets trackers whose files are gone, and empty workspaces", () =
   ])
   expect(trackers.prune()).toBe(false)
 })
+
+test("workspaces lists every workspace that has trackers, most recently used first", () => {
+  const a = workspace("a")
+  const b = workspace("b")
+  const old = note(a, "2026-01-01-old", 1)
+  const fresh = note(b, "2026-01-02-fresh", 0)
+  trackers.add(a, old, Date.now() - DAY)
+  trackers.add(b, fresh)
+  const list = trackers.workspaces()
+  expect(list.map((w) => w.root)).toEqual([b, a])
+  expect(paths(list[0].active)).toEqual([fresh])
+  expect(list[0].current).toEqual(subjectOf(fresh))
+  expect(trackers.workspaces().every((w) => w.done.length === 0)).toEqual(true)
+})
+
+test("workspaces leaves out one with no trackers left", () => {
+  const a = workspace("a")
+  expect(trackers.workspaces()).toEqual([])
+  const path = note(a, "2026-01-01-x")
+  trackers.add(a, path)
+  trackers.setStatus(path, "done")
+  expect(trackers.workspaces().map((w) => paths(w.done))).toEqual([[path]])
+})

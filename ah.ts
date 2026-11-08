@@ -30,6 +30,7 @@ import { dashboard, debugTabs } from "./views/dashboard/cli.ts"
 import { Dashboard } from "./views/dashboard/routes.ts"
 import { MarkdownBackend } from "./views/markdown/routes.ts"
 import { HtmlBackend } from "./views/html/routes.ts"
+import { Hub } from "./views/hub/routes.ts"
 import { message, tracker, view } from "./views/cli.ts"
 import { debugAgents, workspace } from "./core/cli.ts"
 import { hook } from "./core/hook.ts"
@@ -124,6 +125,7 @@ async function serve(port: number) {
   const tabTitles = new TitleSetter()
   const routes = {
     dashboard: dashboardBackend,
+    hub: new Hub(core, htmlBackend),
     markdown: markdownBackend,
     html: htmlBackend,
   } satisfies Record<string, ViewRoutes>
@@ -185,8 +187,13 @@ async function serve(port: number) {
 
   const handler = (req: Request) => {
     const { pathname } = new URL(req.url)
+    // The dashboard follows Rex, which only macOS has: elsewhere the hub of
+    // every tracker is the front page
     if (pathname === "/")
-      return Response.redirect(new URL("/view/dashboard/", req.url), 302)
+      return Response.redirect(
+        new URL(process.platform === "darwin" ? "/view/dashboard/" : "/view/hub/", req.url),
+        302,
+      )
     const inView = viewRoute(pathname)
     if (inView) {
       const { name, view, rest } = inView

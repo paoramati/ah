@@ -2,7 +2,7 @@
 
 Everything here was run and checked on this machine (Windows 11, Node 24.8, Claude Code 2.1.319) unless marked untested. Repo notes: `CLAUDE.md` at the repo root. Port tracking: issue #2.
 
-Scope: markdown and HTML views, chat and highlight comments to the Claude Code session, task trackers. Not supported: dashboard, tab titles, native windows, Rex, jj features, skepsis, LAN (#10). Editor pane: CodeMirror (#8), no install.
+Scope: markdown and HTML views, chat and highlight comments to the Claude Code session, task trackers. Not supported: dashboard (`ah tracker hub` stands in, #21), tab titles, native windows, Rex, jj features, skepsis, LAN (#10). Editor pane: CodeMirror (#8), no install.
 
 ## Why native
 
