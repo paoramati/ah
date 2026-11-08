@@ -27,6 +27,7 @@ import { basename, dirname, join } from "node:path"
 import { assetPath } from "./assets.ts"
 import { die } from "./cli.ts"
 import { type Focus, activatePid, focusHere, keepFocus } from "./focus.ts"
+import { nativeAppCommand, openNativeApp } from "./native_app.ts"
 import { ahStateDir } from "./paths.ts"
 import { processTable, run } from "./proc.ts"
 
@@ -137,6 +138,13 @@ export async function showUrl(
   // The window app, Dock tiles and focus handling are macOS's (Swift,
   // lsappinfo, osascript): elsewhere every place is a tab of the default
   // browser, which takes focus as the OS gives it
+  if (process.platform === "win32" && place === "window") {
+    // The native window (webview-win/, #27) when it is built. A page already
+    // open comes forward, since a second launch for the same URL signals the
+    // first, so `live` needs no special case here.
+    const command = nativeAppCommand(url, options.name)
+    if (command) return openNativeApp(command)
+  }
   if (process.platform !== "darwin") return await openInBrowser(url)
   const focus = await focusHere()
   if (place === "window") {

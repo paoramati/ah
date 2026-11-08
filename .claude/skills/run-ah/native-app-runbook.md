@@ -51,6 +51,23 @@ A small native window that hosts ah's pages, so ah has an app identity: its own 
 - **Visibility from here**: screen capture of windows doesn't work on this machine (see `dashboard-runbook.md`), so screenshots come from `--screenshot`, which is the page content, not the window frame.
 - **DLL load path**: `WebView2Loader.dll` must sit beside the exe (x64 only; ah on arm64 would need the arm64 loader).
 
+## Results (2026-11-08)
+
+- Built with `webview-win/build.ps1` from a clean `build/`: downloads the 8 MB package, verifies its SHA-512 against NuGet's published hash (they match), compiles with the C# 5 `csc.exe`. Output: `ah-app.exe` (15 KB) and three DLLs.
+- `--screenshot` loads the page and writes a PNG, exit 0 (hub-less pages: `/status`, a tracker, a markdown page). Content only, no window frame.
+- The window title follows the page title. A second launch of the same URL: exit 0, still one process and one window. A different URL: its own window.
+- Move, resize, close, reopen: reopened at the same rectangle (`150 120 900 600`).
+- `ah view <file> --in window` opens it (title `native-demo.md`); the same command again makes no duplicate.
+- 3 tests for the command (`nativeAppCommand`: arguments, URL kept as one argument, not built, opt-out).
+
+### Not verified
+
+- **Taskbar grouping and icon.** The ID is set on the process and on the window, with no error, but window properties can't be read from another process, so I could not confirm it from outside. Look at the taskbar: all ah windows should share one button with the teal icon.
+- **That the first window actually comes forward** on a second launch. The event fires and the code calls `Activate`, but this desktop's foreground isn't one I can read. A second launch exiting 0 without a new window is what I saw.
+- **Links to other sites opening in the browser**, which needs a click. The decision function (`IsLocal`) is simple; the handlers are in `App.cs`.
+- **The WebView2-missing case** (the exe shows a message and exits 3). No machine here lacks the runtime.
+- **Pinning to the taskbar.** A pinned shortcut would need a relaunch command and display name on the window too; not done.
+
 ## Out of scope
 
 Electron, an installer (#11), tabs in one window, auto-update, a tray menu inside the app (the tray icon (#24) already launches it).

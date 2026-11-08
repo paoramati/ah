@@ -8,7 +8,7 @@ Work tracking: issue #2 (port), #5 (setup docs, global skill), #6 HTML view, #7 
 
 Works: markdown views (`ah view file.md`), HTML views, chat and highlight comments sent to the Claude Code session, replies shown on the page, task trackers (Go, Park, Done, SessionStart context), paths with spaces, other drives and UNC.
 
-Not supported, on purpose: dashboard, tab titles, native windows (`--in window` opens a browser tab), Rex, jj features (tracker revs stay blank, #9), skepsis diff review, LAN access (#10). The editor pane is CodeMirror, running in the page (no `hx`, no pty), chosen in #8; it has no vim keys. The Helix pane was tried and dropped (PR #15, closed; branch `editor-windows-fixes` keeps the fixes): it needs `hx.exe`, ConPTY needs the fixes in that branch, and agent edits don't reload it without the Steel fork. `helix_command.ts`, `pty.ts` and `terminal_pane.ts` are still in the tree, unused and unfixed on Windows.
+Not supported, on purpose: dashboard, tab titles, native macOS windows (`--in window` opens ah's own WebView2 window once built with `ah app build`, else a browser tab; `AH_APP_WINDOW=0` forces a tab; see webview-win/ and #27), Rex, jj features (tracker revs stay blank, #9), skepsis diff review, LAN access (#10). The editor pane is CodeMirror, running in the page (no `hx`, no pty), chosen in #8; it has no vim keys. The Helix pane was tried and dropped (PR #15, closed; branch `editor-windows-fixes` keeps the fixes): it needs `hx.exe`, ConPTY needs the fixes in that branch, and agent edits don't reload it without the Steel fork. `helix_command.ts`, `pty.ts` and `terminal_pane.ts` are still in the tree, unused and unfixed on Windows.
 
 ## Commands
 
@@ -21,6 +21,7 @@ npx oxfmt --write <file>    # repo formatter (no semicolons, width 92)
 ah server restart           # bin\ah.cmd (cmd/PowerShell) or bin/ah (Git Bash) on PATH
 ah server status            # ports 127.0.0.1:7420 (API) and :7421 (HTML pages)
 ah view <file> --in tab
+ah app build|status         # ah's native window (WebView2); `ah view --in window` uses it when built
 ah tracker add <file> [--title T --goal G]
 ah message send|respond|pending ...
 ```

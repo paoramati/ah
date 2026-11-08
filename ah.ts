@@ -39,6 +39,7 @@ import { TitleSetter } from "./core/tabtitle/setter.ts"
 import { assetPath } from "./platform/assets.ts"
 import { boxCss } from "./views/dashboard/box.ts"
 import { die, portOption } from "./platform/cli.ts"
+import { buildNativeApp, nativeAppBuilt, nativeAppExe } from "./platform/native_app.ts"
 import { scrubSessionEnv } from "./platform/session.ts"
 import { frameAncestors, gateHeaders, requestGate } from "./platform/origin.ts"
 import { themeCss } from "./views/theme.ts"
@@ -181,7 +182,9 @@ async function serve(port: number) {
   const pageRoute = (pathname: string) => pathname.match(/^\/view\/html\/(.*)$/)?.[1]
 
   const cssResponse = (text: string) =>
-    new Response(text, { headers: { "content-type": "text/css; charset=utf-8" } })
+    new Response(text, {
+      headers: { "content-type": "text/css; charset=utf-8" },
+    })
 
   const handler = (req: Request) => {
     const { pathname } = new URL(req.url)
@@ -367,7 +370,40 @@ const debug = new Command("debug").description(
 )
 debug.addCommand(debugTabs)
 debug.addCommand(debugAgents)
-for (const command of [view, message, tracker, workspace, dashboard, server, hook, debug])
+const app = new Command("app").description(
+  "ah's native window on Windows (WebView2): built once, then `ah view --in window` uses it",
+)
+app
+  .command("build")
+  .summary("Build the window app")
+  .description(
+    "Compile webview-win/App.cs with the C# compiler that ships with Windows, into webview-win/build/. The first build downloads the pinned WebView2 NuGet package (about 8 MB, checked against its SHA-512). Needs the WebView2 runtime, which Windows 11 has.",
+  )
+  .action(async () => {
+    if (process.platform !== "win32") die("ah app build: Windows only")
+    process.exitCode = await buildNativeApp()
+  })
+app
+  .command("status")
+  .summary("Whether the window app is built")
+  .action(() => {
+    const exe = nativeAppExe()
+    if (!nativeAppBuilt()) return console.log("not built; run `ah app build`")
+    const off = process.env.AH_APP_WINDOW === "0" ? " (off: AH_APP_WINDOW=0)" : ""
+    console.log(`built: ${exe}${off}`)
+  })
+
+for (const command of [
+  view,
+  message,
+  tracker,
+  workspace,
+  dashboard,
+  server,
+  app,
+  hook,
+  debug,
+])
   program.addCommand(command)
 
 // `-h` is enough; no `help` subcommand, which isn't inherited, so at every
