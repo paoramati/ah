@@ -20,6 +20,5 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true
   },
-  // The CodeMirror pane's packages aren't installed (codemirror_pane.ts)
-  "exclude": ["node_modules", "dist", "views/markdown/codemirror_pane.ts"]
+  "exclude": ["node_modules", "dist"]
 }

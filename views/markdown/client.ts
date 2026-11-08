@@ -16,8 +16,7 @@ import { setUpBasePicker } from "./base_picker.ts"
 import "./preview.ts"
 import { type SourcePosition, sourcePosition } from "./source_position.ts"
 import type { EditorPane } from "./editor.ts"
-import { helix } from "./helix.ts"
-import { TerminalPane } from "./terminal_pane.ts"
+import { CodeMirrorPane } from "./codemirror_pane.ts"
 
 const preview = document.querySelector("ah-markdown")!
 const content = preview.content
@@ -57,10 +56,10 @@ preview.addEventListener("closed", () => {
 
 // ---------- editor pane ----------
 
-// What fills the pane (editor.ts): Helix in a terminal. The pane always
+// What fills the pane (editor.ts): CodeMirror in the page. The pane always
 // starts collapsed.
 const pane: EditorPane | null = editorHost
-  ? new TerminalPane(editorHost, wsUrl("editor"), helix, () => setEditorShown(false))
+  ? new CodeMirrorPane(editorHost, wsUrl("editor"), preview)
   : null
 
 function setEditorShown(shown: boolean) {
